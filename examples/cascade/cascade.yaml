@@ -1,0 +1,72 @@
+# A self-contained build pipeline. Every action is a shell one-liner over
+# coreutils, so this runs anywhere with a shell — nothing to install.
+#
+#   cascade run             # first time: every action runs
+#   cascade run             # again: everything up to date
+#   touch build/src/main.txt
+#   cascade run             # the change cascades forward: warmup, deps, compile,
+#                           #   test, package re-run; checkout and lint do not
+#   cascade status -w       # from another terminal, while a run is in flight
+#
+# The graph:
+#
+#   checkout ─► warmup ─► deps ─┬─► compile ─► test ─┐
+#                               └─► lint ────────────┴─► package ─► release
+
+name: build
+
+actions:
+  checkout:
+    description: fetch the sources
+    run: mkdir -p build/src && echo 'the program' > build/src/main.txt && echo wrote build/src/main.txt
+    produces: [build/src/main.txt]      # no sources: fresh once it exists
+
+  warmup:
+    description: prime the build cache (slow — watch it with `cascade status -w`)
+    needs: [checkout]
+    run: for i in 1 2 3 4 5 6; do echo "cache $((i * 100 / 6))% warm"; sleep 1; done && touch build/warm
+    produces: [build/warm]
+    sources: ["build/src/**"]
+    # An action whose command prints nothing useful can point `progress` at a
+    # command that does, polled on `progress-every` (default 15s):
+    #   progress: du -sh build
+    #   progress-every: 3s
+    # The last line either way becomes the action's live status.
+
+  deps:
+    description: resolve dependencies
+    needs: [warmup]
+    run: sleep 1 && echo 'lockfile' > build/deps.lock && echo resolved 12 modules
+    produces: [build/deps.lock]
+    sources: ["build/src/**"]
+
+  compile:
+    description: compile the binary
+    needs: [deps]
+    run: cat build/src/main.txt build/deps.lock > build/app && echo compiled build/app
+    produces: [build/app]
+    sources: [build/src/main.txt, build/deps.lock]
+
+  lint:
+    description: static checks
+    needs: [deps]
+    run: test -s build/src/main.txt && touch build/lint.ok && echo 'no lint issues'
+    unless: test -f build/lint.ok        # a check delegated to a program
+
+  test:
+    description: run the tests
+    needs: [compile]
+    run: test -s build/app && touch build/test.ok && echo '7 passed, 0 failed'
+    produces: [build/test.ok]
+    sources: [build/app]
+
+  package:
+    description: bundle the release
+    needs: [test, lint]
+    run: tar -czf build/app.tgz -C build app && echo packaged build/app.tgz
+    produces: [build/app.tgz]
+    sources: [build/app]
+
+  release:
+    description: built, tested and packaged
+    needs: [package]
