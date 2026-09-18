@@ -1,0 +1,17 @@
+# Build output
+/bin/
+*.test
+# Binaries dropped by `go build -o <name> ./<dir>` when run from the repo root,
+# named for their main package's directory.
+/complete
+/minimal
+/cascade
+
+# Per-run artifacts from the example workflows
+*-logs/
+*-state.json
+*.dot
+*.png
+*.svg
+!docs/img/*.png
+/examples/cascade/build/
