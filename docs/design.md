@@ -24,12 +24,14 @@ This document details the architectural rationale and engineering trade-offs beh
 Tasks accept inputs as standard arguments and return outputs as typed values. Intermediate results that accumulate across operations do so by returning new data structures rather than mutating shared memory in place. This makes task composition predictable: independent calls can execute safely in any order without synchronization risks.
 
 ### Where This Applies
+
 - **`work.Do` and `work.Go`**: Task return values are returned directly as typed `T` instances without mutating intermediate container types.
 - **`work.Future[T]`**: Represents an immutable result value once `.Get()` resolves. Reading the future does not alter its state.
 - **`history.Result`, `history.TaskResult`, `history.Record`**: Built once when a task or run completes and treated as immutable thereafter.
 - **`work.Context`**: A distinct context instance is allocated for each task invocation, preventing task identity, paths, or logging buffers from leaking to sibling tasks.
 
 ### Deliberate Exceptions
+
 - **Runner state**: The internal `work.Runner` manages mutable runtime state, including active task statuses, in-flight trees, and journal writes. This state is strictly private to `work.Runner` and guarded by a mutex.
 - **Workflow-local state**: A workflow function is free to maintain standard Go local variables (e.g., slices of futures, error collections, or configuration maps) across task calls, following standard Go practices.
 
@@ -40,6 +42,7 @@ Tasks accept inputs as standard arguments and return outputs as typed values. In
 In Cascade's engine, a workflow is written as a standard Go function. Control flow, execution sequence, and concurrency follow the program's normal `if` conditions, loops, and goroutines. There is no pre-compilation step, no dependency builder, and no abstract graph object separate from the executing code.
 
 ### Trade-offs & Invariants
+
 - **Runtime validation**: Without a static graph to inspect before execution, errors such as invalid task names or nil functions are detected when the code executes rather than during a preflight compile phase.
 - **Trace-driven visualization**: Commands such as `plan` and `dot` visualize runs by inspecting recorded execution traces rather than an abstract graph definition. `plan` is `run --plan`: executing the workflow with `Options.Plan = true` records its shape in the journal without committing resumable work. `dot` reads the journal of a completed run to construct the execution hierarchy.
 - **Selection via standard flags**: Cascade does not implement custom DSL syntax for task selection (e.g., `-s`/`-x` flags). Instead, developers expose standard CLI flags that conditionally branch or filter calls directly in Go.
@@ -101,6 +104,7 @@ func snapshot(ctx *work.Context) (string, error) {
 ```
 
 ### Invariants
+
 - **No phantom task records**: An unreached branch emits no events, creates no log files, and appears nowhere in `dot` graphs or terminal summaries.
 - **Prerequisite evaluation**: Caching decisions must be self-contained (evaluating file timestamps, database state, or journal records) rather than invoking downstream tasks to decide whether upstream tasks are needed.
 - **Explicit failure propagation**: When a task returns an error, callers decide whether to handle it or return early. Uncalled downstream tasks are simply not invoked. (Use `work.Critical()` or `work.Fatal()` when a failure should abort the entire run.)
@@ -134,11 +138,13 @@ The CLI's `plan` command (`run --plan`) marks a run in the journal (`Run.Plan = 
 ## Checkpointable and Resumable Runs
 
 Runs are assigned unique timestamps and identifiers, and state is written to an append-only journal:
+
 1. When the run begins.
 2. Whenever any task completes, fails, or is skipped.
 3. When the entire run finishes.
 
 ### Invariants
+
 - **Resumption keyed by path**: `--continue` identifies previous results by matching the task's full hierarchical path and `work.Config` fingerprint.
 - **Plan runs excluded from resumption**: Runs executed with `--plan` (or `plan`) are recorded with `Run.Plan = true`. Cascade unconditionally excludes plan records from being restored by `--continue` or `work.LastRecord`.
 - **Atomic state checkpoints**: The journal records the complete status of the workflow at every checkpoint, ensuring interrupted runs (such as from power loss or user cancellation) can be reliably resumed.
@@ -193,6 +199,7 @@ Cascade prioritizes safety over silent continuation:
 While dynamic Go code provides full flexibility, many operational workflows (such as build scripts, backups, and deployments) consist of fixed shell commands with predictable dependencies. Writing these workflows in Go can introduce unnecessary boilerplate.
 
 The `interpreter` package provides a YAML front end for declaring these pipelines:
+
 - **Interpreter architecture**: `interpreter.Plan` compiles YAML files into waves of `work.Go` and `work.Do` calls, reusing Cascade's existing runner, journal, terminal UI, and logging.
 - **Upfront validation**: Because YAML definitions are static data, `cascade check` can perform comprehensive preflight validation (detecting cycles, dangling dependencies, and syntax errors) before any commands execute.
 - **Declared status reporting**: In YAML pipelines, all declared actions appear in the terminal tree, and actions whose dependencies fail are explicitly reported as `Skipped (blocked)`.

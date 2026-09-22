@@ -11,7 +11,7 @@ Start with `README.md`; `docs/guide.md` is the reference for the engine side, `d
 Where a change usually belongs:
 
 | Changing…                                                                  | Start at                                                                |
-|----------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | what a call can do (`Secret`, `Critical`, `Timeout`, `Config`, resumption) | `work/do.go`, `history/store.go`                                        |
 | a run's logs, journal or event stream                                      | `history/logdir.go`, `history/store.go`, `history/event.go`             |
 | what a call's effects can do, or dry-run/confirm                           | `world/world.go`, `world/approval.go`                                   |
@@ -29,11 +29,11 @@ Run this before every commit. It is the one command that replaces remembering `g
 task precommit
 ```
 
-It runs, in order: `gofmt` check, `markdownfmt` check, `go vet`, a build, `golangci-lint`, the `api.txt` drift check, and the full test suite with the race detector. `task ci` is an alias for it.
+It runs, in order: `gofmt` check, `prettier` check, `go vet`, a build, `golangci-lint`, the `api.txt` drift check, and the test suite with the race detector.
 
 If a step fails, fix it and run `task precommit` again before committing. Do not commit past a red gate.
 
-Don't have `task` (https://taskfile.dev)? Install it with `go install github.com/go-task/task/v3/cmd/task@latest`. See `Taskfile.yml` for the individual tasks (`fmt`, `md:fmt`, `vet`, `build`, `lint`, `test`, `test:race`, `tidy`, `api:check`) if you only need one of them.
+Don't have `task` (https://taskfile.dev)? Install it with `go install github.com/go-task/task/v3/cmd/task@latest`. See `Taskfile.yml` for the individual tasks (`fmt`, `vet`, `build`, `lint`, `test`, `tidy`, `api`) if you only need one of them.
 
 To make this automatic on `git commit`, run once: `task hooks:install`. It points `core.hooksPath` at `.githooks`, which runs `task precommit`. No other task runs this for you, since it edits repo-local git config: that is a decision for whoever owns the checkout to make, not a side effect of testing.
 
@@ -44,7 +44,7 @@ When writing documentation, guides, commit messages, or package godoc, write as 
 - **State what it does directly (avoid compulsive antithesis):** Don't define concepts primarily by what they are not ("This is not a workaround; it is..."). State the behavior and purpose positively and directly.
 - **Avoid epigrams and pseudo-profundity:** Cut phrases like "because that is what it is", "a capital letter is a promise", or "the honest rendering of a declaration is its whole self". Focus on technical specifics.
 - **Vary structure (break the "cost vs. buys" formula):** Don't frame every decision with "The cost is X; what it buys is Y". Use standard headings like "Rationale", "Invariants", and "Trade-offs", or concise bullet points.
-- **Use standard engineering verbs:** Use *returns* instead of *hands back*; *calls*, *uses*, or *imports* instead of *reaches for*; *completes* or *finishes* instead of *settles*; *inspect progress* instead of *where a run has got to*.
+- **Use standard engineering verbs:** Use _returns_ instead of _hands back_; _calls_, _uses_, or _imports_ instead of _reaches for_; _completes_ or _finishes_ instead of _settles_; _inspect progress_ instead of _where a run has got to_.
 - **Avoid em-dash (`—`) overuse:** Don't rely on em-dashes in every sentence for dramatic pause. Use periods, commas, or structured lists.
 - **Don't lecture on standard Go:** Assume the reader knows Go. Explain Cascade's abstractions (`work.Do`, `Context`, `LastRecord`, `World`) rather than re-explaining how `if err != nil` or standard function arguments work.
 - **Check code before stating behavior:** Never sacrifice technical accuracy for a punchy sentence. Check actual function signatures and type checks before documenting behaviors.

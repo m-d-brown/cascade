@@ -9,7 +9,7 @@ A pipeline file (typically `cascade.yaml` or any file passed to `-f`) declares a
 ## File Structure
 
 ```yaml
-name: build                        # optional, defaults to the file's basename without extension
+name: build # optional, defaults to the file's basename without extension
 
 actions:
   checkout:
@@ -29,14 +29,14 @@ actions:
     run: restic backup ~
     every: 24h
 
-  release:                         # Barrier: no run command; waits for dependencies to finish
+  release: # Barrier: no run command; waits for dependencies to finish
     needs: [compile, snapshot]
 ```
 
 ### Top-Level Fields
 
 | Field     | Type   | Description                                                                       |
-|:----------|:-------|:----------------------------------------------------------------------------------|
+| :-------- | :----- | :-------------------------------------------------------------------------------- |
 | `name`    | string | Optional identifier for the pipeline. Defaults to the base name of the YAML file. |
 | `actions` | map    | Map of action names to action definitions. The action name is the map key.        |
 
@@ -107,6 +107,7 @@ When running under dry-run mode (`cascade run --dry-run` or `cascade plan`), all
 `cascade check` parses and inspects the pipeline configuration before executing any commands.
 
 ### Errors (Prevent Execution)
+
 - Syntax or YAML formatting errors.
 - Cycles in the `needs` graph.
 - References to non-existent action names in `needs` (dangling dependencies).
@@ -115,6 +116,7 @@ When running under dry-run mode (`cascade run --dry-run` or `cascade plan`), all
 - Invalid duration strings for `every`, `timeout`, or `progress-every`.
 
 ### Warnings (Reported but Execution Allowed)
+
 - Barriers (actions with no `run`) that configure freshness fields (`produces`, `sources`, `every`, `unless`) or execution controls (`env`, `dir`, `timeout`, `allow-exit`).
 - Actions with `sources` but no `produces` (file modifications cannot be detected).
 - Multiple actions declaring the same file path in `produces`.

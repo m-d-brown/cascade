@@ -22,6 +22,7 @@ This guide covers how to write and run workflows directly in Go using the packag
 - [Operational Considerations and Gotchas](#operational-considerations-and-gotchas)
 
 For complete code examples, see:
+
 - [`examples/engine/complete`](../examples/engine/complete): Full demonstration of all engine capabilities.
 - [`examples/engine/minimal`](../examples/engine/minimal): Minimal workflow demonstrating caching and skipping.
 
@@ -61,7 +62,7 @@ func Do[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts
 ### Task Options
 
 | Option             | Effect                                                                                                                                     |
-|:-------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
+| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
 | `work.Tag(name)`   | Assigns a group tag used for clustering in Graphviz DOT diagrams. Does not affect execution.                                               |
 | `work.Critical()`  | If this task fails, aborts the entire workflow run immediately rather than only failing the caller.                                        |
 | `work.Config(str)` | Mixes `str` into the task's execution fingerprint. If `str` changes, cached results in `--continue` and `work.LastRecord` are invalidated. |
@@ -116,6 +117,7 @@ if err != nil {
 ```
 
 ### Concurrency Rules
+
 - Calling `(*Future[T]).Get()` blocks until the task completes, fails, or the workflow context is canceled.
 - Concurrency across all `work.Go` calls is bounded by the `--jobs` flag (default is CPU-based; `0` means unbounded).
 - Synchronous `work.Do` calls execute inline on the caller's goroutine and do not count toward the `--jobs` concurrency limit.
@@ -164,6 +166,7 @@ return "", work.Fatal(err)
 ### Summary Display Rules
 
 The summary displayed in terminal tables and logs is determined in this order:
+
 1. An explicit message set via `ctx.Summarize(format, a...)`.
 2. If `ctx.Summarize` was not called and `T` is a non-empty `string`, the string value itself.
 3. In all other cases (e.g., `int`, `bool`, structs, or empty strings), the default string `"done"`.
@@ -249,6 +252,7 @@ If the root workflow does not produce a meaningful return value, return a placeh
 ## Execution and Error Handling
 
 Workflows execute strictly according to standard Go control flow:
+
 - When a task returns an error, its caller receives that error like any Go function call.
 - If the caller handles the error and continues, subsequent tasks run normally.
 - If the caller returns the error, execution halts along that call branch.
@@ -256,6 +260,7 @@ Workflows execute strictly according to standard Go control flow:
 ### Halting the Entire Run
 
 To abort the entire workflow when a failure occurs:
+
 - Use `work.Critical()` on critical task definitions.
 - Return `work.Fatal(err)` to trigger an immediate abort dynamically.
 - Pass `--stop-on-error` on the CLI to abort on any task failure.
@@ -264,7 +269,7 @@ To abort the entire workflow when a failure occurs:
 ### Task Statuses
 
 | Symbol | Status     | Meaning                                              |
-|:------:|:-----------|:-----------------------------------------------------|
+| :----: | :--------- | :--------------------------------------------------- |
 |  `✓`   | `ok`       | Ran and finished successfully.                       |
 |  `○`   | `skipped`  | Task completed with `work.Skip(...)`.                |
 |  `⤾`   | `resumed`  | Value restored from an earlier run via `--continue`. |
@@ -295,6 +300,7 @@ func snapshot(ctx *work.Context) (string, error) {
 ```
 
 ### `work.LastRecord` Mechanics
+
 - Looks up the most recent successful run in the state journal matching the task's path and `work.Config` fingerprint.
 - Returns `(value, meta, true)` if a matching successful record was found.
 - `meta.Age()`: Duration since the recorded task completed.

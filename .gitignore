@@ -18,3 +18,4 @@
 /examples/cascade/build/
 
 .vscode/settings.json
+.claude/

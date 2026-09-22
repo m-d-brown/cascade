@@ -16,43 +16,27 @@
 
 version: "3"
 
-vars:
-  GENERATE_PKGS: ./internal/api/...
-
 tasks:
   default:
-    desc: List available tasks.
     silent: true
     cmds:
       - task --list
 
   fmt:
-    desc: Format the source tree with gofmt.
+    desc: Format Go source files and markdown.
     cmds:
       - gofmt -w .
+      - npx prettier --write "**/*.md"
 
   fmt:check:
-    desc: Fail if anything is not gofmt'd (what CI checks).
+    internal: true
     cmds:
       - |
         unformatted=$(gofmt -l .)
         if [ -n "$unformatted" ]; then
           echo "not gofmt'd:"; echo "$unformatted"; exit 1
         fi
-
-  md:fmt:
-    desc: Format markdown with markdownfmt (go install github.com/Kunde21/markdownfmt/v3/cmd/markdownfmt@latest).
-    cmds:
-      - markdownfmt -w .
-
-  md:fmt:check:
-    desc: Fail if any markdown is not markdownfmt'd (what CI checks).
-    cmds:
-      - |
-        unformatted=$(markdownfmt -l .)
-        if [ -n "$unformatted" ]; then
-          echo "not markdownfmt'd:"; echo "$unformatted"; exit 1
-        fi
+      - npx prettier --check "**/*.md"
 
   vet:
     desc: Run go vet.
@@ -60,7 +44,7 @@ tasks:
       - go vet ./...
 
   lint:
-    desc: Run golangci-lint (go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest).
+    desc: Run golangci-lint.
     cmds:
       - golangci-lint run ./...
 
@@ -70,24 +54,24 @@ tasks:
       - go build ./...
 
   test:
-    desc: Run the test suite.
-    cmds:
-      - go test ./...
-
-  test:race:
-    desc: Run the test suite with the race detector (what CI runs; needs cgo).
+    desc: Run the test suite with the race detector.
     cmds:
       - CGO_ENABLED=1 go test ./... -race
 
   tidy:
-    desc: Tidy go.mod/go.sum.
+    desc: Tidy go.mod and go.sum.
     cmds:
       - go mod tidy
 
-  api:check:
-    desc: Fail if api.txt no longer matches the exported API.
+  api:
+    desc: Update api.txt to match current exported symbols.
     cmds:
-      - go generate {{.GENERATE_PKGS}}
+      - go generate ./internal/api
+
+  api:check:
+    internal: true
+    cmds:
+      - task: api
       - git diff --exit-code -- api.txt
 
   # The local gate: fast enough to run before every commit, and enough to
@@ -95,23 +79,17 @@ tasks:
   # vet, a build, lint, a race, and the exported API drifting from api.txt.
   # This is also everything .github/workflows/ci.yml runs.
   precommit:
-    desc: Run before committing. What .githooks/pre-commit runs, and what CI runs.
+    desc: Run all gates before committing (format, vet, build, lint, api, test).
     cmds:
       - task: fmt:check
-      - task: md:fmt:check
       - task: vet
       - task: build
       - task: lint
       - task: api:check
-      - task: test:race
-
-  ci:
-    desc: Alias for precommit. Everything CI runs.
-    cmds:
-      - task: precommit
+      - task: test
 
   hooks:install:
-    desc: One-time setup - point git at .githooks so precommit runs on every commit.
+    desc: Install git pre-commit hook.
     cmds:
       - git config core.hooksPath .githooks
       - echo "installed - git commit now runs task precommit via .githooks/pre-commit"

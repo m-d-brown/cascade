@@ -1,6 +1,7 @@
 # cascade
 
 **cascade** is a workflow runner with two interfaces:
+
 1. **A command-line tool** that runs pipelines of shell commands declared in YAML.
 2. **A Go library** for building workflows directly in code when static YAML isn't expressive enough.
 
@@ -17,23 +18,23 @@ actions:
     produces: [go.sum]
     sources: [go.mod]
 
-  compile:                       # runs once deps is up to date
+  compile: # runs once deps is up to date
     run: go build -o build/app ./cmd/app
     needs: [deps]
-    produces: [build/app]        # skip if newer than every source file
+    produces: [build/app] # skip if newer than every source file
     sources: ["**/*.go"]
 
   test:
     run: go test ./...
-    needs: [deps]                 # runs alongside compile, not after it
+    needs: [deps] # runs alongside compile, not after it
 
   package:
     run: docker build -t app:latest .
-    needs: [compile, test]       # waits for both
+    needs: [compile, test] # waits for both
 
   snapshot:
     run: restic backup ~
-    every: 24h                   # skip if last succeeded < 24h ago
+    every: 24h # skip if last succeeded < 24h ago
 ```
 
 ```bash
@@ -77,7 +78,7 @@ b, err := darwin.Get()
 Each call is assigned a hierarchical path based on its name and parent call (for example, `release/build-linux`). This path serves as the consistent identifier across all tools: the live terminal tree, individual and combined text logs (`flow.log`), structured events (`run.jsonl`), Graphviz DOT traces, and Chrome trace flamegraphs.
 
 | Feature                      | Description                                                                                                                          |
-|:-----------------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
+| :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
 | **No declared graph**        | Workflows are standard Go functions. Sharing work means calling a function once and passing its return value down.                   |
 | **Type-safe outputs**        | `work.Do[T]` and `Future[T]` return strongly typed values. Type mismatches are caught at compile time.                               |
 | **Visible concurrency**      | Tasks run concurrently via `work.Go` and are synchronized with `Future.Get`, with total concurrency bounded by `--jobs`.             |
@@ -99,7 +100,7 @@ Visualizing concurrency using the flamegraph from [`examples/engine/complete`](e
 ## Package Layout
 
 | Package                      | Purpose                                                                                                       |
-|:-----------------------------|:--------------------------------------------------------------------------------------------------------------|
+| :--------------------------- | :------------------------------------------------------------------------------------------------------------ |
 | [`work`](work)               | Task execution engine: calls, futures, contexts, and runtime coordination.                                    |
 | [`history`](history)         | Run persistence: state journals, event streams, text logs, DOT graphs, and flamegraph exports.                |
 | [`world`](world)             | Optional abstraction for intercepting external side effects (real execution, dry-runs, interactive approval). |
@@ -116,7 +117,7 @@ Visualizing concurrency using the flamegraph from [`examples/engine/complete`](e
 To update `api.txt` after making deliberate public API changes:
 
 ```bash
-go generate ./internal/api
+task api
 ```
 
 ## Developing
