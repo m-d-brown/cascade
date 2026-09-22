@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mdbrown/cascade/cli"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/cli"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // captureExecute swaps os.Args, os.Stdin, os.Stdout and os.Stderr, drives the
@@ -44,7 +44,7 @@ func captureExecute(t *testing.T, args []string, stdin string, app cli.App) (std
 		_ = inW.Close()
 	}()
 
-	// Drain both pipes concurrently with Execute writing to them — a pipe's
+	// Drain both pipes concurrently with Execute writing to them. A pipe's
 	// buffer is bounded, so reading only after Execute returns would
 	// deadlock the moment a test produces more output than that buffer
 	// holds.
@@ -99,7 +99,7 @@ func TestExecuteRunReportsFailureExitCode(t *testing.T) {
 	}
 }
 
-func TestExecutePretendDoesNotBlockOnContinue(t *testing.T) {
+func TestExecutePlanDoesNotBlockOnContinue(t *testing.T) {
 	app := testApp(t, false)
 	if _, _, code := captureExecute(t, []string{"plan", "--plain"}, "", app); code != 0 {
 		t.Fatalf("plan exit code = %d", code)
@@ -198,9 +198,9 @@ func TestExecuteNoStateMeansNoJournal(t *testing.T) {
 }
 
 // TestExecuteInjectsThePrompter checks that a workflow can pull the run's
-// prompter out of its context and drive an approval through it — the plumbing
-// that lets a confirming world use the active display's prompt instead of one
-// that writes over it.
+// prompter out of its context and drive an approval through it. This is the
+// plumbing that lets a confirming world use the active display's prompt
+// instead of one that writes over it.
 func TestExecuteInjectsThePrompter(t *testing.T) {
 	dir := t.TempDir()
 	var performed bool

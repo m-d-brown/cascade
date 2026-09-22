@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // Cmd describes an external command run by a call.
@@ -22,7 +22,7 @@ type Cmd struct {
 	// Path is the program to run. Ignored when Shell is set.
 	Path string
 	Args []string
-	// Shell, when set, is run through "sh -c" — for pipelines such as
+	// Shell, when set, is run through "sh -c", for pipelines such as
 	// "ssh host tar -cf - /etc | rclone rcat dst".
 	Shell string
 	Dir   string
@@ -40,7 +40,7 @@ type Cmd struct {
 	// the right shape to work with. See [world.DryRun].
 	Instead []string
 	// Watch, if set, gives the caller a live view of the output while the
-	// command runs — for a progress reporter on another goroutine.
+	// command runs, for a progress reporter on another goroutine.
 	Watch *Watcher
 }
 
@@ -52,7 +52,7 @@ type Watcher struct{ cap capture }
 func NewWatcher() *Watcher { return &Watcher{} }
 
 // TailLine returns the last n captured lines as a single line, joined by
-// " · ", or "" if there is no output yet — shaped for a [work.Context.Monitor]
+// " · ", or "" if there is no output yet, shaped for a [work.Context.Monitor]
 // probe. For the lines themselves, use [Watcher.Lines].
 func (w *Watcher) TailLine(n int) string {
 	lines := w.cap.lines()
@@ -150,8 +150,8 @@ func execute(ctx *work.Context, c Cmd, cap *capture) (ExecResult, error) {
 	// When the run is canceled or a Timeout fires, kill the whole process
 	// group, not just the shell: a command that backgrounded a child, or a
 	// shell that forked rather than exec'd, would otherwise leave that child
-	// running — and holding the output pipe, so Wait blocks on it. WaitDelay
-	// is the backstop if even that does not settle the I/O.
+	// running, and holding the output pipe, so Wait blocks on it. WaitDelay
+	// is the backstop if even that does not finish the I/O.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {

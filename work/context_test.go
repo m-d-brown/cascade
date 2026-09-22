@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // funcObserver adapts a function to history.Observer, the way newObserver does
-// inside the run package itself — this file just needs its own copy to
+// inside the run package itself. This file just needs its own copy to
 // build one from a closure.
 type funcObserver func(history.Event)
 

@@ -15,10 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/ui"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/ui"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -37,13 +37,13 @@ type App struct {
 	Flags func(fs *pflag.FlagSet)
 	// Flow is the workflow: the whole of what a run does. It is an
 	// ordinary function that calls other functions through [work.Do] and
-	// [work.Go] as it goes — there is nothing to collect or assemble
-	// beforehand, which is why this is the entire shape of App.
+	// [work.Go]. There is nothing to collect or assemble beforehand, which
+	// is why this is the entire shape of App.
 	//
 	// It takes exactly the shape [work.Do] itself takes, since the run's
 	// root is not otherwise different from any other named call. A
 	// workflow whose own top-level function already returns what is worth
-	// showing — a release's own URL — can be named directly, with nothing
+	// showing (a release's own URL) can be named directly, with nothing
 	// wrapped around it: Flow: release. One that only calls through to a
 	// single named call needs no more than returning that call's own
 	// result:
@@ -52,12 +52,11 @@ type App struct {
 	//	    return work.Do(ctx, "report", report)
 	//	}
 	Flow func(ctx *work.Context) (string, error)
-	// Describe returns a one-line description of this run's own input —
-	// the version being released, whatever makes this run worth telling
-	// apart from another — for the run list and `logs`. Called once per
-	// run, after Flags parses, so it can read whatever your own flags read.
-	// Optional: a workflow with nothing that varies between runs can leave
-	// it nil, and the run list simply shows nothing extra.
+	// Describe returns a one-line description of this run's own input,
+	// such as the version being released, for the run list and `logs`.
+	// Called once per run, after Flags parses, so it can read whatever
+	// your own flags read. Optional: a workflow with nothing that varies
+	// between runs can leave it nil, and the run list shows nothing extra.
 	Describe func() string
 	// DefaultStatePath is where the run journal lives (default
 	// "./<name>-state.json").
@@ -66,18 +65,18 @@ type App struct {
 	// (default "./<name>-logs").
 	DefaultLogDir string
 	// ExitWhenDone skips holding the finished live display open for
-	// browsing (↑/↓, enter, q to quit) and returns to the shell the moment
-	// the run itself ends, on a terminal same as anywhere else. The default,
-	// false, is right for a hand-authored workflow, where stepping through
-	// what a run just did is worth keeping the terminal for; a pipeline
-	// runner that already reports itself as a table — cascade sets this —
-	// wants control back immediately instead.
+	// browsing (↑/↓, enter, q to quit) and returns to the shell as soon as
+	// the run ends. The default, false, suits a hand-authored workflow,
+	// where stepping through what a run just did is worth keeping the
+	// terminal for. A pipeline runner that already reports itself as a
+	// table, which is why cascade sets this, wants control back
+	// immediately instead.
 	ExitWhenDone bool
 }
 
 type options struct {
 	jobs        int
-	pretend     bool
+	plan        bool
 	cont        string
 	stopOnError bool
 	statePath   string
@@ -89,7 +88,7 @@ type options struct {
 
 func (o *options) register(fs *pflag.FlagSet, app App) {
 	fs.IntVarP(&o.jobs, "jobs", "j", 0, "maximum calls started with Go running at once (0 = unbounded)")
-	fs.BoolVarP(&o.pretend, "pretend", "n", false, "mark this run as one that changed nothing: journaled for dot/flamegraph, never resumed from")
+	fs.BoolVarP(&o.plan, "plan", "n", false, "mark this run as one that changed nothing: journaled for dot/flamegraph, never resumed from")
 	fs.StringVar(&o.cont, "continue", "", "finish an earlier run: calls it already made are not made again (id, or \"last\")")
 	fs.BoolVar(&o.stopOnError, "stop-on-error", false, "abort the whole run on the first failure")
 	fs.StringVar(&o.statePath, "state", firstNonEmpty(app.DefaultStatePath, app.Name+"-state.json"), "path to the state journal")
@@ -134,18 +133,18 @@ func Execute(app App) int {
 	planCmd := &cobra.Command{
 		Use:   "plan",
 		Short: "run the workflow, marking the run so it is never resumed from",
-		Long: "Run the workflow with --pretend: mark the run so it is journaled — dot and\n" +
-			"flamegraph can still show its trace afterward — but never eligible to be\n" +
-			"resumed from. plan is `run --pretend`, kept as its own name because a\n" +
+		Long: "Run the workflow with --plan (-n): mark the run so it is journaled (dot and\n" +
+			"flamegraph can still show its trace afterward) but never eligible to be\n" +
+			"resumed from. plan is `run --plan`, kept as its own name because a\n" +
 			"disposable run is a question worth asking on its own.\n\n" +
 			"This does not by itself stop any effect from happening for real: whether an\n" +
 			"effect actually happens is a property of the world a call's own code chose to\n" +
 			"route it through (see the world package), not of this flag. An app that wants\n" +
-			"--pretend/plan to also mean \"touch nothing\" builds a pretend world of its own\n" +
-			"and wires it in.",
+			"plan to also mean \"touch nothing\" builds a dry-run world of its own and wires\n" +
+			"it in.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			planOpt := opt
-			planOpt.pretend = true
+			planOpt.plan = true
 			planOpt.cont = "" // continuing a plan makes no sense
 			return runWorkflow(cmd, &planOpt, app)
 		},
@@ -226,7 +225,7 @@ func Execute(app App) int {
 
 	// A bare invocation on a terminal is the front door: what the last runs
 	// did, and the choice between starting a new one and finishing one that
-	// stopped early. Anywhere else — cron, CI, a pipe — there is nobody to
+	// stopped early. Anywhere else (cron, CI, a pipe) there is nobody to
 	// ask, so it runs.
 	root.RunE = func(cmd *cobra.Command, args []string) error {
 		if !interactive(cmd) {
@@ -290,7 +289,7 @@ func runWorkflow(cmd *cobra.Command, opt *options, app App) error {
 	// context so a workflow that wants a human in the loop can pull it out
 	// with world.PrompterFromContext and hand it to world.Confirm, instead of
 	// building one of its own that writes over the live display. cli still
-	// never builds or wires up a World itself — see docs/design.md.
+	// never builds or wires up a World itself. See docs/design.md.
 	var prompter world.Prompter
 	if interactiveDisplay {
 		live = ui.NewLive(stdout, os.Stdin, cancel, app.ExitWhenDone)
@@ -304,16 +303,16 @@ func runWorkflow(cmd *cobra.Command, opt *options, app App) error {
 	}
 	ctx = world.WithPrompter(ctx, prompter)
 
-	if opt.pretend {
-		fmt.Fprintln(cmd.ErrOrStderr(), "marking this run as pretend: it will be journaled, but never eligible to be resumed from")
+	if opt.plan {
+		fmt.Fprintln(cmd.ErrOrStderr(), "marking this run as a plan: it will be journaled, but never eligible to be resumed from")
 	}
-	// A pretend run is still journaled — marked as one, so dot and
-	// flamegraph can show its trace — but [history.Run.Pretend] keeps it
-	// permanently ineligible to stand in for real work. Whether any effect
-	// the workflow describes actually happens is a property of the world
-	// its own code chose to route it through (see the world package), not of this
-	// flag — the framework has no way to reach into an app's own calls to
-	// decide that for it.
+	// A plan run is still journaled: marked as one, so dot and flamegraph
+	// can show its trace, but [history.Run.Plan] keeps it permanently
+	// ineligible to stand in for real work. Whether any effect the workflow
+	// describes actually happens is a property of the world its own code
+	// chose to route it through (see the world package), not of this flag.
+	// The framework has no way to reach into an app's own calls to decide
+	// that for it.
 	var store history.Store
 	if !opt.noState {
 		store = history.NewFileStore(opt.statePath)
@@ -342,7 +341,7 @@ func runWorkflow(cmd *cobra.Command, opt *options, app App) error {
 	runner := work.NewRunner(app.Flow, work.Options{
 		Name:        app.Name,
 		Concurrency: opt.jobs,
-		Pretend:     opt.pretend,
+		Plan:        opt.plan,
 		StopOnError: opt.stopOnError,
 		Store:       store,
 		Input:       input,
@@ -422,7 +421,7 @@ func firstNonEmpty(vals ...string) string {
 }
 
 // UserStatePath returns a per-user state path for name, under
-// $XDG_STATE_HOME or ~/.local/state — a value for [App.DefaultStatePath].
+// $XDG_STATE_HOME or ~/.local/state, suitable for [App.DefaultStatePath].
 func UserStatePath(name string) string {
 	base := os.Getenv("XDG_STATE_HOME")
 	if base == "" {

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // flowLine renders one flow.log line: timestamp, level, call path, message.
@@ -128,7 +128,7 @@ func TestEnterOpensTheSelectedStepsLog(t *testing.T) {
 func TestEnterAtTheEndOfALogMovesToTheNextStep(t *testing.T) {
 	m := browseModel(t)
 	send(m, tea.KeyMsg{Type: tea.KeyDown})  // release/build
-	send(m, tea.KeyMsg{Type: tea.KeyEnter}) // open its log — short, so already at the end
+	send(m, tea.KeyMsg{Type: tea.KeyEnter}) // open its log, short, so already at the end
 	if off := m.logView.offset; off != m.maxLogOffset() {
 		t.Fatalf("offset = %d, want the whole short log already in view (%d)", off, m.maxLogOffset())
 	}

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/world"
 )
 
 func TestViewRendersRowsAndPressToAbortHint(t *testing.T) {

@@ -1,28 +1,20 @@
-// Package interpreter runs a graph of shell commands declared in YAML as a
-// workflow.
+// Package interpreter executes declared pipelines of shell commands using
+// the cascade engine.
 //
-// The framework underneath has no graph on purpose: a workflow is a plain Go
-// function, and what runs is exactly what the code calls (see
-// github.com/mdbrown/cascade/docs/design.md#there-is-no-graph). That is
-// the right shape when a pipeline has real control flow — conditionals,
-// loops, fan-out computed at run time. A large class of operational work is
-// not that: it is a fixed set of external commands, each waiting on some
-// others, each with a way to tell whether it already ran. Writing that by
-// hand is a lot of
+// While the core cascade engine runs workflows written as standard Go code,
+// many operational tasks (such as build scripts, backups, and deployments)
+// consist of fixed shell commands with static dependencies. The interpreter
+// allows declaring these pipelines in YAML.
 //
-//	work.Go(ctx, "name", func(ctx *work.Context) (T, error) { … }, opts…)
+// When running a pipeline, [Plan.Run] organizes actions into topological waves
+// and executes them concurrently using work.Go and work.Do. This integrates
+// YAML pipelines directly into the engine's runtime features: live terminal
+// tree display, event logging, crash resumption (--continue), and Graphviz
+// exports.
 //
-// for a structure that is really just data. This package is the data: a
-// cascade file lists the actions, their dependencies, and how each decides it
-// is up to date, and [Plan.Run] drives work.Go/work.Do on the author's
-// behalf — so the whole of the framework's value (the live tree, the journal,
-// flow.log, dot, flamegraph, --continue, and approval prompts) is inherited
-// with no new engine code. It is an interpreter on top of the engine, not a
-// change to it.
+// # Pipeline Format
 //
-// # The file
-//
-//	name: build                      # optional — defaults to the file's base name
+//	name: build                      # optional: defaults to file basename
 //
 //	actions:
 //	  checkout:
@@ -35,63 +27,40 @@
 //	  compile:
 //	    run: go build -o build/app ./cmd/app
 //	    needs: [deps]
-//	    produces: [build/app]         # up to date if this exists and is newer …
-//	    sources: ["**/*.go"]          # … than every source
+//	    produces: [build/app]         # fresh if newer than all sources
+//	    sources: ["**/*.go"]
 //
 //	  snapshot:
 //	    run: restic backup ~
-//	    every: 24h                    # skip if it last succeeded < 24h ago
+//	    every: 24h                    # skip if last succeeded < 24h ago
 //
-//	  release:                        # empty run: a barrier that only waits on needs
+//	  release:                        # barrier: waits for dependencies
 //	    needs: [compile, snapshot]
 //
-// The action name is the map key — nothing is repeated. Every field but the
-// key is optional: run, needs, produces, sources, every, timeout (kill the
-// command after a duration), unless (a shell command; exit status 0 means
-// "already done"), env (overrides on top of the process environment), dir,
-// allow-exit ([]int), optional (a failure becomes a skip), progress /
-// progress-every, and description. needs, produces and sources take a bare
-// string as a one-element list.
+// Each action is identified by its map key. Available fields include run,
+// needs, produces, sources, every, timeout, unless, env, dir, allow-exit,
+// optional, progress, progress-every, and description.
 //
-// [Load] rejects what cannot run — an unknown field, a dangling or cyclic
-// need, an unparseable duration, an action defined twice, `run` given a list
-// — with a line number and a message that names the file's own vocabulary.
-// What runs but is probably a mistake — a barrier that also sets freshness
-// fields, an impossible allow-exit code, two actions that produce the same
-// path — is a [Plan.Warnings] entry, logged before a run starts and printed
-// by `cascade check`.
+// [Load] validates the pipeline syntax, rejecting cycles, undefined needs,
+// duplicate names, or malformed durations. [Plan.Warnings] reports valid but
+// potentially erroneous configurations, such as barrier actions with unused
+// freshness fields.
 //
-// # Freshness
+// # Freshness Rules
 //
-// An action runs unless it is proven fresh. Each signal it configures can
-// prove freshness; when it sets more than one, all must agree before the
-// action is skipped — the conservative direction, matching
-// design.md#fail-closed. A fresh action reports [work.Skip], so every
-// declared action still shows up as a row: in a declared graph, seeing each
-// action's status is the honest rendering, where in a Go-authored workflow an
-// unreached call simply never happens.
+// An action runs unless it is determined to be up to date. If multiple
+// freshness checks are defined, all active checks must agree before the
+// action is skipped:
 //
-//   - every: the run journal shows this action last succeeded, under the same
-//     fingerprint, less than the given duration ago.
-//   - produces + sources: every produces path exists and is newer than every
-//     sources path (a "**" path segment matches any depth). A missing output
-//     is stale.
-//   - unless: the command exits 0.
+//   - every: The execution journal indicates this action succeeded within the
+//     specified duration under an identical configuration fingerprint.
+//   - produces and sources: Every produces file exists and is newer than every
+//     file matched by sources.
+//   - unless: The specified shell command exits with status code 0.
 //
-// Each check is routed through the run's [world.World], so under a dry-run
-// world every check reports "stale" and `plan --dry-run` shows the whole
-// cascade.
+// When an action executes, any downstream action that consumes its outputs as
+// sources is automatically marked stale and will also run.
 //
-// A stale action re-runs. If what it produces is another action's sources,
-// that action is then stale in turn — a change near the top cascades forward
-// through the graph, which is the name.
-//
-// # What you give up
-//
-// No conditionals, no loops, no fan-out whose shape depends on a value
-// computed mid-run, and dot draws the run trace as a flat list rather than
-// the dependency DAG (the actions are siblings; nothing nests). For any of
-// those, write the workflow in Go and call this package's engine directly.
-// What you get back is a pipeline that reads top to bottom as the thing it
-// is, and that anything — not just a Go compiler — can inspect.
+// For complete documentation of the YAML configuration format, see
+// docs/pipeline-spec.md in the repository root.
 package interpreter

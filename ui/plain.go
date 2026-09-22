@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // Plain is a [history.Observer] and [world.Prompter] that writes one line per
-// event. It is the fallback when stdout is not a terminal — cron runs, CI,
+// event. It is the fallback when stdout is not a terminal: cron runs, CI,
 // piped output.
 type Plain struct {
 	w           io.Writer

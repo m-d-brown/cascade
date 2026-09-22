@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 func write(t *testing.T, path, content string) {

@@ -10,18 +10,18 @@ type skipped struct{ reason string }
 
 func (s skipped) Error() string { return s.reason }
 
-// Skip returns an error meaning a call chose not to do its work — a disabled
-// feature, a case that does not apply. Return it from [Do]'s function, with
+// Skip returns an error meaning a call chose not to do its work (a disabled
+// feature, a case that does not apply). Return it from [Do]'s function, with
 // T's zero value:
 //
 //	if len(repos) == 0 {
-//	    return "", "", flow.Skip("no repositories found under %s", roots)
+//	    return "", "", work.Skip("no repositories found under %s", roots)
 //	}
 //
 // It counts as success for the run's exit code but is reported apart from an
-// ordinary ok. It is not how a call says "this was already done" — that is
-// an ordinary check written with an if statement, using [LastRecord] to ask
-// what a previous run recorded.
+// ordinary ok. Saying "this was already done" is not what Skip is for; that
+// is an ordinary check written with an if statement, using [LastRecord] to
+// ask what a previous run recorded.
 func Skip(format string, a ...any) error {
 	return skipped{reason: fmt.Sprintf(format, a...)}
 }

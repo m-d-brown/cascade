@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 type treeNode struct {
@@ -14,7 +14,7 @@ type treeNode struct {
 }
 
 // isRunning reports whether a row is currently executing. Failed and
-// Canceled are terminal — a subtree containing one of those is done making
+// Canceled are terminal: a subtree containing one of those is done making
 // noise even though something in it went wrong, which is why they do not
 // keep a subtree from folding the way a still-Running row does.
 func isRunning(r *row) bool { return r.status == history.Running }
@@ -47,7 +47,7 @@ func countSubtree(n *treeNode) int {
 // call, each row hanging from the row named as its parent when it started.
 //
 // Unlike a graph inferred from declared dependencies, this is exact: a call
-// has exactly one parent — whichever call made it — so there is nothing to
+// has exactly one parent, whichever call made it, so there is nothing to
 // pick among and no depth to infer. Children appear in the order their
 // calls started, which for a run in progress is also the order that is
 // useful to read.
@@ -98,7 +98,7 @@ const (
 )
 
 // flattenTree turns the forest into the lines to print, in at most maxRows
-// of them — maxRows of zero or less means no limit.
+// of them. maxRows of zero or less means no limit.
 //
 // What to leave out is decided before anything is drawn, because the two
 // cannot be settled in one pass: a "├─" is a promise that another row
@@ -115,8 +115,8 @@ func flattenTree(roots []*treeNode, maxRows int) []renderedItem {
 	}
 }
 
-// flattenAll renders every row in the forest and folds nothing — the shape
-// used when the user is stepping through the tree by hand rather than
+// flattenAll renders every row in the forest and folds nothing. This is the
+// shape used when the user is stepping through the tree by hand rather than
 // watching it unfold. drawForest reads a nil plan as "draw every node".
 func flattenAll(roots []*treeNode) []renderedItem {
 	return drawForest(roots, nil)
@@ -265,7 +265,7 @@ func capRows(items []renderedItem, maxRows int) []renderedItem {
 }
 
 // formatPrefix draws the connectors down to one row, given whether each
-// level above it — and the row itself — was the last of its siblings still
+// level above it (and the row itself) was the last of its siblings still
 // drawn.
 func formatPrefix(isLast []bool) string {
 	if len(isLast) <= 1 {

@@ -14,4 +14,7 @@
 *.png
 *.svg
 !docs/img/*.png
+!docs/img/*.svg
 /examples/cascade/build/
+
+.vscode/settings.json

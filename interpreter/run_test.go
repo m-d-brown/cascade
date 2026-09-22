@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 func TestRunExecutesInDependencyOrder(t *testing.T) {
@@ -202,7 +202,7 @@ actions:
   a: {run: 'echo a > `+dir+`/a'}
   b: {run: 'echo b > `+dir+`/b', needs: [a]}
 `)
-	res := runCascade(t, r, world.DryRun(), work.Options{Pretend: true})
+	res := runCascade(t, r, world.DryRun(), work.Options{Plan: true})
 	if res.ExitCode() != 0 {
 		t.Fatalf("dry run failed: %v", res.Err())
 	}

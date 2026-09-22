@@ -26,20 +26,20 @@ type Record struct {
 	// HasValue distinguishes "produced nothing recordable" from "produced
 	// the zero value", since Value omits either one the same way as JSON.
 	HasValue bool `json:"hasValue,omitempty"`
-	// Partial marks a record whose value could not be written — the call
-	// produced something JSON cannot carry — so it cannot be stood in for
-	// later.
+	// Partial marks a record whose value could not be written because the
+	// call produced something JSON cannot carry, so it cannot be stood in
+	// for later.
 	Partial bool `json:"partial,omitempty"`
 	// Secret marks a call whose value is never written here, whatever it
 	// produced. The record still says the call happened, when, and how it
-	// ended — only the value itself is withheld.
+	// ended; only the value itself is withheld.
 	Secret   bool      `json:"secret,omitempty"`
 	Started  time.Time `json:"started"`
 	Finished time.Time `json:"finished"`
 	Duration Duration  `json:"duration,omitempty"`
 }
 
-// worked reports whether the record is of work that happened — either this
+// worked reports whether the record is of work that happened: either this
 // call ran and succeeded, or it was carried over from a run where it did.
 func (rec Record) worked() bool {
 	return rec.Status == Succeeded || rec.Status == Resumed
@@ -49,8 +49,8 @@ func (rec Record) worked() bool {
 // asked for, what has happened so far, and whether it ever finished.
 //
 // It is written when the run starts and rewritten every time a call reaches
-// a terminal status, so a run that is interrupted — ^C, a power cut, a
-// laptop lid — leaves behind exactly what it had got done. Such a run keeps
+// a terminal status, so a run interrupted by ^C, a power cut, or a closed
+// laptop lid leaves behind exactly what it had got done. Such a run keeps
 // the status Running rather than ever reaching one of the others, which is
 // how `--continue last` picks it out among the journal's runs, and how the
 // engine can carry it on later.
@@ -58,23 +58,23 @@ type Run struct {
 	// ID names the run and its log directory.
 	ID string `json:"id"`
 	// Status is Running until the run ends, then Succeeded, Failed or
-	// Canceled — the same vocabulary a call ends in.
+	// Canceled: the same vocabulary a call ends in.
 	Status Status `json:"status"`
-	// Input is a one-line description of what this run was for — the
-	// version being released, whatever makes it worth telling apart from
-	// another — set once when the run starts and never overwritten by how
-	// it ends. Empty for a workflow with nothing that varies between runs.
+	// Input is a one-line description of what this run was for, such as the
+	// version being released. It is set once when the run starts and never
+	// overwritten by how it ends. Empty for a workflow with nothing that
+	// varies between runs.
 	Input string `json:"input,omitempty"`
 	// Logs is the directory holding this run's per-call logs and its event
 	// log.
 	Logs string `json:"logs,omitempty"`
-	// Pretend marks a run made with a dry-run world: nothing in it happened
-	// for real. It is kept so its trace can still be looked at — `dot` and
-	// `flamegraph` on this run's id — but every record in it is permanently
-	// ineligible to stand in for real work, in Restorable and in
-	// Journal.LastSuccessful alike: a run that did nothing must never leave
-	// state saying the work is done.
-	Pretend bool `json:"pretend,omitempty"`
+	// Plan marks a run made by `plan`: a rehearsal, journaled but not
+	// resumable, not real work. It is kept so its trace can still be looked
+	// at (`dot` and `flamegraph` on this run's id), but every record in it
+	// is permanently ineligible to stand in for real work, in Restorable
+	// and in Journal.LastSuccessful alike. A run that did nothing must
+	// never leave state saying the work is done.
+	Plan bool `json:"plan,omitempty"`
 	// Tasks is what happened to each call in this run, keyed by path.
 	Tasks    map[string]Record `json:"tasks,omitempty"`
 	Started  time.Time         `json:"started"`
@@ -99,7 +99,7 @@ func (r Run) Counts() map[Status]int {
 // for: it succeeded in that run, its value was not withheld as Secret or
 // left Record.Partial, and its fingerprint has not changed since.
 func (r Run) Restorable(path, fingerprint string) (Record, bool) {
-	if r.Pretend {
+	if r.Plan {
 		return Record{}, false
 	}
 	rec, ok := r.Tasks[path]
@@ -125,8 +125,8 @@ const keepRuns = 20
 
 // LastSuccessful returns the most recent record of a call that still
 // applies: the last time it *succeeded*, with the fingerprint it was called
-// with unchanged. It is what a freshness check ([work.LastRecord]) reads —
-// contrast [Journal.MostRecent], which ignores both status and fingerprint.
+// with unchanged. It is what a freshness check ([work.LastRecord]) reads.
+// [Journal.MostRecent], by contrast, ignores both status and fingerprint.
 //
 // A call whose configuration changed has no last successful record, so a
 // freshness check built on this is stale by default rather than by accident.
@@ -135,7 +135,7 @@ func (j *Journal) LastSuccessful(path, fingerprint string) (Record, bool) {
 		return Record{}, false
 	}
 	for i := len(j.Runs) - 1; i >= 0; i-- {
-		if j.Runs[i].Pretend {
+		if j.Runs[i].Plan {
 			continue
 		}
 		rec, ok := j.Runs[i].Tasks[path]
@@ -192,9 +192,9 @@ func (j *Journal) Paths() []string {
 }
 
 // MostRecent returns the newest record for a path, whatever its status and
-// fingerprint, along with the id of the run it came from — what `state`
-// prints, as opposed to what a freshness check ([Journal.LastSuccessful])
-// may act on.
+// fingerprint, along with the id of the run it came from. This is what
+// `state` prints, as opposed to what a freshness check
+// ([Journal.LastSuccessful]) may act on.
 func (j *Journal) MostRecent(path string) (Record, string, bool) {
 	if j == nil {
 		return Record{}, "", false
@@ -322,7 +322,7 @@ type memoryStore struct {
 }
 
 // NewMemoryStore returns a [Store] that keeps its journal in memory rather
-// than on disk — for a test that wants a real Store without a filesystem.
+// than on disk, for a test that wants a real Store without a filesystem.
 func NewMemoryStore() Store { return &memoryStore{} }
 
 // Load implements [Store].

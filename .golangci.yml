@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    errcheck:
+      # Writes to stdout, stderr, a log file, or a hash have nothing
+      # actionable to do with a failure — there is no better response than
+      # the one the caller already gets from a broken pipe or a full disk.
+      # Checking these everywhere would be noise where io.Writer and
+      # hash.Hash implementations that do fail are already covered by an
+      # explicit `_, _ =` with a comment saying why.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln

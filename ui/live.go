@@ -13,8 +13,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/world"
 	"golang.org/x/term"
 )
 
@@ -30,7 +30,7 @@ func IsTerminal(f *os.File) bool {
 // line, plus inline interactive modals for approval prompts.
 //
 // There is no upfront list of rows to seed, the way there was for a
-// declared graph — a call announces itself only when the workflow's own
+// declared graph. A call announces itself only when the workflow's own
 // code reaches it, so the tree Live draws is a running account of what the
 // run has done so far, not a plan of what it will do.
 //
@@ -51,7 +51,7 @@ type Live struct {
 // (the default a caller gets by way of [cli.App.ExitWhenDone] being unset)
 // leaves the finished tree on screen to browse, the same as ever, when a
 // terminal is driving it; true quits the moment the run ends regardless, so
-// the process hands control back to the shell without a keypress — the
+// the process returns control to the shell without a keypress. That is the
 // shape a pipeline runner wants, where a hand-authored workflow wants the
 // browse.
 func NewLive(out io.Writer, in io.Reader, cancel func(), exitWhenDone bool) *Live {
@@ -117,8 +117,8 @@ func (l *Live) PromptApproval(ctx context.Context, req world.Request) (world.Dec
 }
 
 // Wait blocks until the finished display is dismissed by the user. It
-// returns at once when the display is not holding itself open — no terminal
-// driving it, or the run was cut short — so a caller can always call it
+// returns at once when the display is not holding itself open (no terminal
+// driving it, or the run was cut short), so a caller can always call it
 // before [Live.Stop] and let an interactive run linger on its result.
 func (l *Live) Wait() { <-l.done }
 
@@ -127,7 +127,7 @@ func (l *Live) Stop() {
 	l.once.Do(func() {
 		select {
 		case <-l.done:
-			return // already gone — the user dismissed it
+			return // already gone: the user dismissed it
 		default:
 		}
 		l.prog.Send(stopMsg{})
@@ -226,7 +226,7 @@ func (p *logPane) reload() {
 	p.lines = lines
 }
 
-// combinedLinePath is the call path a flow.log line is tagged with — its
+// combinedLinePath is the call path a flow.log line is tagged with: its
 // third whitespace-separated field, after the timestamp and level. Neither
 // the timestamp, the level, nor a call path contains a space, so the field
 // is unambiguous however the message is spaced.
@@ -444,8 +444,8 @@ func (m *model) key(s string) tea.Cmd {
 	return nil
 }
 
-// keyLog handles a keystroke while a log pane is open. Enter pages down, then
-// — once the end is in view — moves on to the next step's log.
+// keyLog handles a keystroke while a log pane is open. Enter pages down,
+// then, once the end is in view, moves on to the next step's log.
 func (m *model) keyLog(s string) tea.Cmd {
 	p := m.logView
 	switch s {
@@ -490,7 +490,7 @@ func (m *model) quitOrAbort() tea.Cmd {
 	return nil
 }
 
-// navPaths is every row's path in the order the browse view draws them —
+// navPaths is every row's path in the order the browse view draws them:
 // the sequence the cursor steps along.
 func (m *model) navPaths() []string {
 	items := flattenAll(buildForest(m.rows))
@@ -544,7 +544,7 @@ func (m *model) logBody() int {
 	return max(m.height-4, 1)
 }
 
-// maxLogOffset is the furthest the log pane can scroll — the offset that
+// maxLogOffset is the furthest the log pane can scroll: the offset that
 // puts the last line at the bottom of the body.
 func (m *model) maxLogOffset() int {
 	if m.logView == nil {
@@ -834,8 +834,8 @@ func (m *model) writeApproval(b *strings.Builder) {
 	)
 }
 
-// renderItem formats one tree line — the same row shape the live and browse
-// views both draw — clipped to width.
+// renderItem formats one tree line, the same row shape the live and browse
+// views both draw, clipped to width.
 func (m *model) renderItem(it renderedItem, nameWidth, width int) string {
 	if it.isSummary {
 		return truncateVisible(dimStyle.Render(it.summary), width)

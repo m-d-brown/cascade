@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // SecretSource fetches secrets by reference. A source that can fetch
@@ -22,8 +22,8 @@ type SecretSource interface {
 }
 
 // Secret fetches one secret and returns it. It is marked [work.Secret], so
-// it is never written to the state journal — which means there is no last
-// run to hand back on [work.Options.Continue], and it always runs again.
+// it is never written to the state journal, which means there is no last
+// run to return on [work.Options.Continue], and it always runs again.
 //
 //	token, err := units.Secret(ctx, w, vault, "publish-token", "op://Private/widget/token")
 func Secret(ctx *work.Context, w world.World, source SecretSource, name, ref string) (string, error) {
@@ -41,8 +41,8 @@ func Secret(ctx *work.Context, w world.World, source SecretSource, name, ref str
 	}, work.Secret())
 }
 
-// Secrets fetches several secrets from one source in a single call — the
-// reason to call it rather than [Secret] once per reference: a vault that
+// Secrets fetches several secrets from one source in a single call: the
+// reason to call it rather than [Secret] once per reference is that a vault that
 // asks for a fingerprint is asked once, not once per secret. refs maps the
 // key a caller wants a value back under to the source's own reference.
 //

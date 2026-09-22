@@ -2,8 +2,8 @@
 // to work with it after the fact: the state journal ([Store], [Journal],
 // [Record]), the on-disk log directory ([LogDir]), the DOT and flame-graph
 // renderers, and the events a live run emits ([Event], [Observer]). Nothing
-// here is used by the code inside a call — see
-// [github.com/mdbrown/cascade/work] for that. The runner writes to a
+// here is used by the code inside a call: see
+// [github.com/m-d-brown/cascade/work] for that. The runner writes to a
 // [Store] and a [LogDir] as a run proceeds; everything else here is touched
 // only by whatever renders, stores, or reports on a run from outside it:
 // the cli package's `dot`, `flamegraph`, `state` and `runs` subcommands,
@@ -17,9 +17,9 @@ type Status uint8
 
 const (
 	// Pending is the zero value: a call something has heard of but that has
-	// not reached a status yet. The runner never records it — a call's first
-	// event already carries Running, Resumed or Canceled — so it stands only
-	// for the absence of any of the others. A call started concurrently and
+	// not reached a status yet. The runner never records it, since a call's
+	// first event already carries Running, Resumed or Canceled, so it stands
+	// only for the absence of any of the others. A call started concurrently and
 	// still waiting for a concurrency slot has no status and no event at all
 	// until its slot comes free.
 	Pending Status = iota
@@ -65,7 +65,7 @@ func (s Status) Terminal() bool {
 }
 
 // OK reports whether the call reached a terminal state that counts as
-// success — the same vocabulary a run itself ends in.
+// success, using the same vocabulary a run itself ends in.
 func (s Status) OK() bool {
 	switch s {
 	case Succeeded, Skipped, Resumed:

@@ -14,7 +14,7 @@ type EventKind uint8
 const (
 	// RunStarted is emitted once, before the run's root call begins. Unlike
 	// a declared graph, a run built from ordinary function calls has no list
-	// of calls to hand over up front — they are discovered as the run makes
+	// of calls to hand over up front; they are discovered as the run makes
 	// them, each announced by its own TaskStarted.
 	RunStarted EventKind = iota
 	// TaskStarted is emitted once when a call begins: its Status is Running
@@ -65,7 +65,7 @@ type Event struct {
 	Time time.Time
 	// Run is the id of the run this event belongs to.
 	Run string
-	// Path is the full path of the call this event is about — empty for
+	// Path is the full path of the call this event is about. Empty for
 	// RunStarted, RunLog and RunFinished.
 	Path string
 	// Parent is Path's immediate parent, or "" for a top-level call. Set on
@@ -78,8 +78,8 @@ type Event struct {
 	Status  Status
 	Level   slog.Level
 	Message string
-	// LogPath is the run's one text log — flow.log, every call's lines in it,
-	// each tagged with its call path. Set on RunStarted so an observer can
+	// LogPath is the run's one text log, flow.log, with every call's lines in
+	// it, each tagged with its call path. Set on RunStarted so an observer can
 	// read a call's lines out of it while the run is still going. Empty for a
 	// run with nowhere to write logs.
 	LogPath string

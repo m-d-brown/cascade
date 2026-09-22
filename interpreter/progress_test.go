@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/units"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/units"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 func TestReadProgressFoldsTheEventLog(t *testing.T) {

@@ -8,13 +8,13 @@ import (
 // Flamegraph renders a run as Chrome Trace Event Format JSON
 // (https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU):
 // one row per call, spanning its Started to Finished, viewable at
-// chrome://tracing or https://ui.perfetto.dev — drag the output in, zoom,
+// chrome://tracing or https://ui.perfetto.dev. Drag the output in, zoom, and
 // click a call for its exact times.
 //
 //	release flamegraph 2026-08-23T17-13-48 > trace.json
 //
 // This is a concurrency timeline, not a call-stack flame graph: a row shows
-// when a call ran and for how long, not the tree it hung from — two rows
+// when a call ran and for how long, not the tree it hung from. Two rows
 // overlapping is what running two calls concurrently looks like here.
 func Flamegraph(r Run) string {
 	paths := make([]string, 0, len(r.Tasks))
@@ -61,8 +61,8 @@ func Flamegraph(r Run) string {
 
 	// Every field above is a string, an int or a map of them: nothing here
 	// can hit one of the few things json.Marshal actually fails on (a chan,
-	// a func, a cycle), so there is no error worth surfacing — the same
-	// reasoning Dot's own callers rely on for a plain string return.
+	// a func, a cycle), so there is no error worth surfacing. Dot's own
+	// callers rely on the same reasoning for a plain string return.
 	data, _ := json.MarshalIndent(struct {
 		TraceEvents []traceEvent `json:"traceEvents"`
 	}{events}, "", "  ")

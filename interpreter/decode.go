@@ -58,7 +58,7 @@ func decodeFile(data []byte) (file, error) {
 // into a one-element list for the list-valued fields.
 func normalizeActions(actions *yaml.Node) error {
 	if actions.Kind == yaml.ScalarNode && actions.Tag == "!!null" {
-		return nil // `actions:` with nothing — build() reports "no actions"
+		return nil // `actions:` with nothing: build() reports "no actions"
 	}
 	if actions.Kind != yaml.MappingNode {
 		return fmt.Errorf("line %d: `actions` must be a map of name to action", actions.Line)
@@ -66,7 +66,7 @@ func normalizeActions(actions *yaml.Node) error {
 	for i := 0; i+1 < len(actions.Content); i += 2 {
 		nameNode, act := actions.Content[i], actions.Content[i+1]
 		if act.Kind == yaml.ScalarNode && act.Tag == "!!null" {
-			continue // `name:` with no body — a bare barrier
+			continue // `name:` with no body: a bare barrier
 		}
 		if act.Kind != yaml.MappingNode {
 			return fmt.Errorf("line %d: action %q must be a mapping of fields", act.Line, nameNode.Value)

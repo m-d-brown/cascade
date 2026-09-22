@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1044" height="558" viewBox="0 0 1044 558" font-family="SFMono-Regular,Menlo,Consolas,monospace">
+<rect width="1044" height="558" fill="#ffffff"/>
+<text x="14" y="20" font-size="13" fill="#212121">v1.4.0 — concurrency timeline</text>
+<line x1="314.0" y1="36" x2="314.0" y2="544" stroke="#e0e0e0" stroke-width="1"/>
+<text x="314.0" y="30" font-size="10" fill="#757575" text-anchor="middle">0s</text>
+<line x1="556.6" y1="36" x2="556.6" y2="544" stroke="#e0e0e0" stroke-width="1"/>
+<text x="556.6" y="30" font-size="10" fill="#757575" text-anchor="middle">2s</text>
+<line x1="799.2" y1="36" x2="799.2" y2="544" stroke="#e0e0e0" stroke-width="1"/>
+<text x="799.2" y="30" font-size="10" fill="#757575" text-anchor="middle">4s</text>
+<text x="306" y="56" font-size="10.5" fill="#212121" text-anchor="end">release</text>
+<rect x="314.0" y="45" width="640.0" height="14" rx="3" fill="#2e7d32"><title>release (ok)</title></rect>
+<text x="960.0" y="56" font-size="9.5" fill="#757575">5.28s</text>
+<text x="306" y="80" font-size="10.5" fill="#212121" text-anchor="end">release/announce</text>
+<rect x="927.7" y="69" width="8.9" height="14" rx="3" fill="#2e7d32"><title>release/announce (ok)</title></rect>
+<text x="942.6" y="80" font-size="9.5" fill="#757575">73ms</text>
+<text x="306" y="104" font-size="10.5" fill="#212121" text-anchor="end">release/announce/announce-releases</text>
+<rect x="927.7" y="93" width="8.7" height="14" rx="3" fill="#2e7d32"><title>release/announce/announce-releases (ok)</title></rect>
+<text x="942.4" y="104" font-size="9.5" fill="#757575">72ms</text>
+<text x="306" y="128" font-size="10.5" fill="#212121" text-anchor="end">release/announce/announce-team-at-example-com</text>
+<rect x="927.7" y="117" width="8.7" height="14" rx="3" fill="#2e7d32"><title>release/announce/announce-team-at-example-com (ok)</title></rect>
+<text x="942.4" y="128" font-size="9.5" fill="#757575">72ms</text>
+<text x="306" y="152" font-size="10.5" fill="#212121" text-anchor="end">release/build-darwin</text>
+<rect x="438.9" y="141" width="64.1" height="14" rx="3" fill="#2e7d32"><title>release/build-darwin (ok)</title></rect>
+<text x="509.0" y="152" font-size="9.5" fill="#757575">528ms</text>
+<text x="306" y="176" font-size="10.5" fill="#212121" text-anchor="end">release/build-linux</text>
+<rect x="438.9" y="165" width="68.5" height="14" rx="3" fill="#2e7d32"><title>release/build-linux (ok)</title></rect>
+<text x="513.4" y="176" font-size="9.5" fill="#757575">565ms</text>
+<text x="306" y="200" font-size="10.5" fill="#212121" text-anchor="end">release/build-windows</text>
+<rect x="438.9" y="189" width="63.3" height="14" rx="3" fill="#2e7d32"><title>release/build-windows (ok)</title></rect>
+<text x="508.2" y="200" font-size="9.5" fill="#757575">522ms</text>
+<text x="306" y="224" font-size="10.5" fill="#212121" text-anchor="end">release/cleanup</text>
+<rect x="936.7" y="213" width="17.3" height="14" rx="3" fill="#2e7d32"><title>release/cleanup (ok)</title></rect>
+<text x="959.9" y="224" font-size="9.5" fill="#757575">142ms</text>
+<text x="306" y="248" font-size="10.5" fill="#212121" text-anchor="end">release/notes</text>
+<rect x="665.1" y="237" width="21.2" height="14" rx="3" fill="#2e7d32"><title>release/notes (ok)</title></rect>
+<text x="692.3" y="248" font-size="9.5" fill="#757575">175ms</text>
+<text x="306" y="272" font-size="10.5" fill="#212121" text-anchor="end">release/package</text>
+<rect x="606.0" y="261" width="34.2" height="14" rx="3" fill="#2e7d32"><title>release/package (ok)</title></rect>
+<text x="646.3" y="272" font-size="9.5" fill="#757575">282ms</text>
+<text x="306" y="296" font-size="10.5" fill="#212121" text-anchor="end">release/prepare</text>
+<rect x="314.0" y="285" width="124.8" height="14" rx="3" fill="#2e7d32"><title>release/prepare (ok)</title></rect>
+<text x="444.9" y="296" font-size="9.5" fill="#757575">1.03s</text>
+<text x="306" y="320" font-size="10.5" fill="#212121" text-anchor="end">release/prepare/generate</text>
+<rect x="349.7" y="309" width="28.9" height="14" rx="3" fill="#2e7d32"><title>release/prepare/generate (ok)</title></rect>
+<text x="384.6" y="320" font-size="9.5" fill="#757575">238ms</text>
+<text x="306" y="344" font-size="10.5" fill="#212121" text-anchor="end">release/prepare/modules</text>
+<rect x="378.7" y="333" width="59.9" height="14" rx="3" fill="#2e7d32"><title>release/prepare/modules (ok)</title></rect>
+<text x="444.6" y="344" font-size="9.5" fill="#757575">494ms</text>
+<text x="306" y="368" font-size="10.5" fill="#212121" text-anchor="end">release/prepare/source</text>
+<rect x="314.0" y="357" width="35.6" height="14" rx="3" fill="#2e7d32"><title>release/prepare/source (ok)</title></rect>
+<text x="355.7" y="368" font-size="9.5" fill="#757575">294ms</text>
+<text x="306" y="392" font-size="10.5" fill="#212121" text-anchor="end">release/prepare/toolchain</text>
+<rect x="438.6" y="381" width="2.0" height="14" rx="3" fill="#2e7d32"><title>release/prepare/toolchain (ok)</title></rect>
+<text x="446.6" y="392" font-size="9.5" fill="#757575">2ms</text>
+<text x="306" y="416" font-size="10.5" fill="#212121" text-anchor="end">release/prepare/version</text>
+<rect x="314.0" y="405" width="2.0" height="14" rx="3" fill="#2e7d32"><title>release/prepare/version (ok)</title></rect>
+<text x="322.0" y="416" font-size="9.5" fill="#757575">0s</text>
+<text x="306" y="440" font-size="10.5" fill="#212121" text-anchor="end">release/publish</text>
+<rect x="686.4" y="429" width="241.3" height="14" rx="3" fill="#2e7d32"><title>release/publish (ok)</title></rect>
+<text x="933.6" y="440" font-size="9.5" fill="#757575">1.99s</text>
+<text x="306" y="464" font-size="10.5" fill="#212121" text-anchor="end">release/secrets</text>
+<rect x="640.3" y="453" width="2.0" height="14" rx="3" fill="#2e7d32"><title>release/secrets (ok)</title></rect>
+<text x="648.3" y="464" font-size="9.5" fill="#757575">0s</text>
+<text x="306" y="488" font-size="10.5" fill="#212121" text-anchor="end">release/sign</text>
+<rect x="640.4" y="477" width="24.7" height="14" rx="3" fill="#2e7d32"><title>release/sign (ok)</title></rect>
+<text x="671.1" y="488" font-size="9.5" fill="#757575">204ms</text>
+<text x="306" y="512" font-size="10.5" fill="#212121" text-anchor="end">release/test-race</text>
+<rect x="507.4" y="501" width="98.5" height="14" rx="3" fill="#2e7d32"><title>release/test-race (ok)</title></rect>
+<text x="611.9" y="512" font-size="9.5" fill="#757575">812ms</text>
+<text x="306" y="536" font-size="10.5" fill="#212121" text-anchor="end">release/test-unit</text>
+<rect x="507.5" y="525" width="51.8" height="14" rx="3" fill="#2e7d32"><title>release/test-unit (ok)</title></rect>
+<text x="565.2" y="536" font-size="9.5" fill="#757575">427ms</text>
+</svg>

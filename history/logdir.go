@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-// logDirLayout is how a run's log directory — and, with no id of its own,
-// the run itself — is named.
+// logDirLayout is how a run's log directory is named. The run has no id of
+// its own, so this also names the run.
 const logDirLayout = "2006-01-02T15-04-05"
 
 // LogDir is one run's logs on disk: a single text log with every line in the
-// order it was written, and the run's event log — the machine-readable index
-// alongside it — in the layout of "~/backup-logs/<run>/".
+// order it was written, and the run's event log (the machine-readable index)
+// alongside it, in the layout of "~/backup-logs/<run>/".
 //
 //	2026-08-23T16-59-01/
 //	  flow.log       every line, each tagged with the call it came from
@@ -26,10 +26,10 @@ const logDirLayout = "2006-01-02T15-04-05"
 // is the third column of flow.log, and run.jsonl is the structured index for
 // anything that needs to pick a call's lines out again.
 //
-// The runner writes into it as a run proceeds — [LogDir.WriteCombined] for
-// flow.log, [LogDir.Events] for the event log — and `logs` reads flow.log
-// back afterward. A nil *LogDir is a valid no-op: a run with nowhere to
-// write its logs.
+// The runner writes into it as a run proceeds, via [LogDir.WriteCombined]
+// for flow.log and [LogDir.Events] for the event log, and `logs` reads
+// flow.log back afterward. A nil *LogDir is a valid no-op: a run with
+// nowhere to write its logs.
 type LogDir struct {
 	Dir string
 
@@ -39,8 +39,8 @@ type LogDir struct {
 }
 
 // NewLogDir creates a directory for one run under base, named for the time
-// it started, and returns it. The name is made unique, so two runs a second
-// apart — or in the same second — never write into each other.
+// it started, and returns it. The name is made unique, so two runs started
+// in the same second never write into each other.
 func NewLogDir(base string) (*LogDir, error) {
 	stamp := time.Now().Format(logDirLayout)
 	dir := filepath.Join(base, stamp)

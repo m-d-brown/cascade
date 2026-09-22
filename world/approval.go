@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mdbrown/cascade/work"
+	"github.com/m-d-brown/cascade/work"
 )
 
 // Request describes an effect awaiting confirmation. [Confirm] builds one
@@ -15,7 +15,7 @@ import (
 type Request struct {
 	// Task is the path of the call whose effect is waiting.
 	Task string
-	// Target is the effect itself — the command, the path, the address —
+	// Target is the effect itself (the command, the path, the address):
 	// the one line the prompt shows and wraps.
 	Target string
 }
@@ -50,10 +50,10 @@ type prompterKey struct{}
 
 // WithPrompter returns a copy of ctx carrying p, so a workflow can retrieve
 // the prompter that belongs to whatever display is running and hand it to
-// [Confirm] — rather than build one of its own that writes straight to the
+// [Confirm], rather than build one of its own that writes straight to the
 // terminal and fights the live display for the screen.
 //
-// The command-line front end ([github.com/mdbrown/cascade/cli]) does
+// The command-line front end ([github.com/m-d-brown/cascade/cli]) does
 // this before the run starts: the prompter is the live tree's inline
 // approval modal in a terminal, the plain line-by-line prompt otherwise. A
 // workflow assembling its own confirming world reads it back with
@@ -64,8 +64,8 @@ type prompterKey struct{}
 //	    w = world.Confirm(w, p)
 //	}
 //
-// Whether to wrap in [Confirm] at all stays the workflow's call — a human in
-// the loop is a property of the run, not of the display — this only spares
+// Whether to wrap in [Confirm] at all stays the workflow's call (a human in
+// the loop is a property of the run, not of the display); this only spares
 // it from constructing the prompter.
 func WithPrompter(ctx context.Context, p Prompter) context.Context {
 	return context.WithValue(ctx, prompterKey{}, p)
@@ -92,7 +92,7 @@ func PrompterFromContext(ctx context.Context) Prompter {
 //
 // The prompter belongs to whatever display is running, so take it from the
 // context the run was started with rather than building one that fights the
-// live display for the screen — see [PrompterFromContext]. A nil p makes
+// live display for the screen; see [PrompterFromContext]. A nil p makes
 // Confirm a no-op and returns w unchanged.
 func Confirm(w World, p Prompter) World {
 	if p == nil {

@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 func TestFlattenAllFoldsNothing(t *testing.T) {

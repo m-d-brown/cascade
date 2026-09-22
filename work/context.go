@@ -10,17 +10,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // Context is what a call is handed while it runs: its identity and its
 // logging.
 //
-// It is also the call's [context.Context] — it carries the run's
+// It is also the call's [context.Context]: it carries the run's
 // cancellation, so work takes one parameter rather than a context beside a
 // context:
 //
-//	func build(ctx *flow.Context, goos string) (string, error) {
+//	func build(ctx *work.Context, goos string) (string, error) {
 //	    cmd := exec.CommandContext(ctx, "go", "build", …)   // cancels with the run
 //	    …
 //	}
@@ -31,14 +31,14 @@ import (
 // [Context.Path], [Context.Name], [Context.LogPath] and [Context.Started]
 // report the call's identity; they are set by the runner and never change.
 // Every logging method is scoped to the call, so a call never has to know
-// how the run is being displayed — the same call feeds the run's text log
+// how the run is being displayed. The same call feeds the run's text log
 // (its lines tagged with the call path), the event log and its row in the
 // live terminal display.
 //
-// Nothing here routes an effect anywhere — a call is free to touch the
+// Nothing here routes an effect anywhere; a call is free to touch the
 // outside world however an ordinary Go function would. A call that wants
 // that touch to be interceptable reaches for
-// [github.com/mdbrown/cascade/world] explicitly, whose DryRun and
+// [github.com/m-d-brown/cascade/world] explicitly, whose DryRun and
 // Confirm are what make that possible.
 type Context struct {
 	path    string
@@ -59,7 +59,7 @@ type Context struct {
 func (c *Context) Name() string { return c.name }
 
 // LogPath is the run's one text log, where this call's lines are written
-// among the rest, each tagged with its call path — or "" if the run has
+// among the rest, each tagged with its call path, or "" if the run has
 // nowhere to write logs.
 func (c *Context) LogPath() string { return c.logPath }
 
@@ -67,7 +67,7 @@ func (c *Context) LogPath() string { return c.logPath }
 func (c *Context) Started() time.Time { return c.started }
 
 // Path is this call's full path: its own name, preceded by the names of
-// every call it is nested inside, joined with "/" — "release/build-linux".
+// every call it is nested inside, joined with "/": "release/build-linux".
 // It is the key everything downstream of the call uses: the log file, the
 // row in the live display, the box [history.Dot] draws, and what the state
 // journal remembers this call by.
@@ -84,7 +84,7 @@ func (c *Context) Done() <-chan struct{} { return c.context().Done() }
 func (c *Context) Err() error { return c.context().Err() }
 
 // Value implements [context.Context]. Data flows between calls as ordinary
-// Go values — arguments in, a result out — not through context values.
+// Go values (arguments in, a result out), not through context values.
 func (c *Context) Value(key any) any { return c.context().Value(key) }
 
 func (c *Context) context() context.Context {
@@ -111,17 +111,17 @@ func (c *Context) Statusf(format string, a ...any) {
 	c.emitLine(slog.LevelInfo, history.TaskStatus, fmt.Sprintf(format, a...))
 }
 
-// Summarize sets the one-line summary the run shows for this call — the
-// table row, the live display, `state` — the same way [Context.Statusf]
+// Summarize sets the one-line summary the run shows for this call (the
+// table row, the live display, `state`), the same way [Context.Statusf]
 // sets the transient one, except this is what stands once the call is
 // done. The last call before the call returns wins.
 //
 // A call that never calls this gets a summary for free: its own return
-// value, if it is a non-empty string, or "done" otherwise — which is enough
+// value, if it is a non-empty string, or "done" otherwise. That is enough
 // for most calls, and why fn returning just a value and an error, without a
 // summary of its own to carry, is normal:
 //
-//	func fetchSource(ctx *flow.Context, version string) (string, error) {
+//	func fetchSource(ctx *work.Context, version string) (string, error) {
 //	    …
 //	    return "/tmp/widget", nil   // shows as "/tmp/widget"
 //	}
@@ -201,7 +201,7 @@ func (w *pipeWriter) Close() error {
 // function stops the reporter and waits for it to exit.
 //
 // The probe runs on its own goroutine while the call works, so anything it
-// reads from the call must be safe to share — an atomic, a mutex, or a
+// reads from the call must be safe to share: an atomic, a mutex, or a
 // units.Watcher over the running command's output. It is handed the
 // monitor's own context, which ends when the run does or when stop is
 // called.

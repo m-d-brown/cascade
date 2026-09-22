@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
-// ActionStatus is where one action of a run has got to, folded from the run's
+// ActionStatus is one action's progress within a run, folded from the run's
 // event log.
 type ActionStatus struct {
 	Name   string
@@ -38,7 +38,7 @@ func (s ActionStatus) Elapsed() time.Duration {
 	return end.Sub(s.Started)
 }
 
-// RunProgress is a run's state as read from its event log — current even for a
+// RunProgress is a run's state as read from its event log: current even for a
 // run still in flight, since the log is written as events happen.
 type RunProgress struct {
 	Run      string

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // Options configures a run.
@@ -19,18 +19,17 @@ type Options struct {
 	// nests under a call of this name. Empty defaults to "run".
 	Name string
 	// Concurrency caps how many calls started with [Go] run at once. Zero
-	// means unbounded. A synchronous [Do] call never waits on this — it
+	// means unbounded. A synchronous [Do] call never waits on this: it
 	// runs in its caller's own goroutine, which was already counted (or not
 	// subject to the cap at all) when that goroutine started.
 	Concurrency int
-	// Pretend marks the run itself as one that changed nothing, so its
-	// trace is still journaled — for `plan`, `dot` and `flamegraph` — but
-	// permanently excluded from [history.Run.Restorable] and [history.Journal.LastSuccessful]:
+	// Plan marks the run itself as one that changed nothing, so its trace
+	// is still journaled (for `dot` and `flamegraph`) but permanently
+	// excluded from [history.Run.Restorable] and [history.Journal.LastSuccessful]:
 	// a run that did nothing must never leave state saying the work is
 	// done. Set this whenever the workflow's own effects are routed through
-	// a world that changes nothing — see
-	// [github.com/mdbrown/cascade/world].
-	Pretend bool
+	// a dry-run [github.com/m-d-brown/cascade/world.World].
+	Plan bool
 	// StopOnError aborts the run on the first failure. By default a
 	// failure only stops the branch of the workflow that returned it, and
 	// the rest keeps going.
@@ -61,7 +60,7 @@ type Options struct {
 // functions through [Do] and [Go].
 //
 // There is nothing to walk ahead of time, because there is nothing but the
-// function itself — no declared graph, no upfront list of what will run.
+// function itself: no declared graph, no upfront list of what will run.
 // What happens is exactly what the root call's own code does, discovered as
 // it does it.
 type Runner struct {
@@ -86,11 +85,11 @@ type Runner struct {
 	cancel   context.CancelFunc
 }
 
-// NewRunner returns a runner for root, the workflow's top-level call — a
-// function of exactly the shape [Do] itself takes, since the root is not
-// otherwise different from any other named call: the run's own summary line
-// comes from the same place a nested call's would, [Context.Summarize] or
-// root's own return value.
+// NewRunner returns a runner for root, the workflow's top-level call. root
+// takes exactly the shape [Do] itself takes, since it is not otherwise
+// different from any other named call: the run's own summary line comes
+// from the same place a nested call's would, [Context.Summarize] or root's
+// own return value.
 func NewRunner(root func(ctx *Context) (string, error), opts Options) *Runner {
 	if opts.Name == "" {
 		opts.Name = "run"
@@ -135,7 +134,7 @@ func (r *Runner) Run(ctx context.Context) (*history.Result, error) {
 		ID:      r.id,
 		Status:  history.Running,
 		Input:   r.opts.Input,
-		Pretend: r.opts.Pretend,
+		Plan:    r.opts.Plan,
 		Tasks:   map[string]history.Record{},
 		Started: started,
 	}
@@ -220,8 +219,8 @@ func (r *Runner) runID() string {
 const runIDLayout = "2006-01-02T15-04-05"
 
 // childPath allocates the path for one call under parent, disambiguating a
-// name repeated under the same parent — a loop calling [Do] or [Go] with the
-// same base name more than once — by suffixing it, so two calls never
+// name repeated under the same parent (a loop calling [Do] or [Go] with the
+// same base name more than once) by suffixing it, so two calls never
 // collide on one path. Giving each call its own name, the way a loop
 // building several builds names each after its platform, means this rarely
 // fires at all.
@@ -318,8 +317,8 @@ func (r *Runner) emit(e history.Event) {
 
 // checkpoint writes the run as it stands. Every call that reaches a
 // terminal status is in it, so an interrupted run leaves behind exactly what
-// it got done — and a failure to write one is reported and not fatal,
-// because losing the record of work is not a reason to stop doing it.
+// it got done. A failure to write one is reported and not fatal, because
+// losing the record of work is not a reason to stop doing it.
 func (r *Runner) checkpoint(ctx context.Context) {
 	if r.opts.Store == nil {
 		return

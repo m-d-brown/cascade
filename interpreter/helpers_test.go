@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // inRun runs fn as the body of a one-shot workflow and returns what it

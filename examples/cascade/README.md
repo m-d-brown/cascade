@@ -1,51 +1,44 @@
 # examples/cascade
 
-A build pipeline declared in [`cascade.yaml`](cascade.yaml), for trying the
-`cascade` binary on. Every action is a shell one-liner over coreutils, so it
-runs anywhere with a shell — nothing to install.
+A build pipeline declared in [`cascade.yaml`](cascade.yaml), useful for trying out the `cascade` command-line tool. Every action is a shell one-liner using core utilities, so it runs on any POSIX system without extra dependencies.
 
 ```
 checkout ─► warmup ─► deps ─┬─► compile ─► test ─┐
                             └─► lint ────────────┴─► package ─► release
 ```
 
-## Run it
+## Running the Example
 
-Build the binary first. Under `go run`, every invocation is a freshly linked
-binary with a new fingerprint, so nothing is ever seen as up to date.
+Build the `cascade` binary first. (Running via `go run` produces a newly linked binary on each invocation with a different build fingerprint, preventing caching checks from recognizing past runs.)
 
-```
+```bash
 go build -o /tmp/cascade ./cmd/cascade
 cd examples/cascade
 
-/tmp/cascade run          # first time: every action runs
-/tmp/cascade run          # again: everything up to date, 0 ran
+/tmp/cascade run          # first run: all actions execute
+/tmp/cascade run          # second run: all actions are skipped as up to date
 touch build/src/main.txt
-/tmp/cascade run          # the change cascades: warmup, deps, compile, test,
-                          #   package re-run; checkout and lint do not
+/tmp/cascade run          # the touched file triggers: warmup, deps, compile, test,
+                          # and package re-run; checkout and lint remain skipped
 ```
 
-`warmup` sleeps for six seconds; from another terminal, while a run is going:
+The `warmup` action includes a short sleep. You can inspect its progress from a second terminal:
 
-```
-/tmp/cascade status       # where it has got to — reads the live event log
-/tmp/cascade status -w     # …refreshing until it finishes
-```
-
-More:
-
-```
-/tmp/cascade check            # validate the file, report anything suspect
-/tmp/cascade run --dry-run    # walk the whole thing, touching nothing
-/tmp/cascade plan             # a dry run, also journaled (never resumed from)
-/tmp/cascade run --confirm    # ask before every action
-/tmp/cascade runs             # past runs
-/tmp/cascade dot | dot -Tsvg -o trace.svg     # the run that just happened
-/tmp/cascade graph -f cascade.yaml | dot -Tsvg -o dag.svg   # the declared graph
+```bash
+/tmp/cascade status       # inspect current progress from the live event log
+/tmp/cascade status -w    # watch live progress updates until completion
 ```
 
-`graph` and `status` are small extra subcommands in
-[`cmd/cascade/main.go`](../../cmd/cascade/main.go) — `cli.App` has no hook for
-one, so they are handled before the framework sees the arguments. `graph`
-prints the `needs` DAG, which the engine's `dot` cannot (there the actions are
-siblings under one root).
+### Additional Commands
+
+```bash
+/tmp/cascade check            # validate pipeline syntax and report warnings
+/tmp/cascade run --dry-run    # execute pipeline with side effects suppressed
+/tmp/cascade plan             # preview the execution trace without committing changes
+/tmp/cascade run --confirm    # interactively prompt before each action
+/tmp/cascade runs             # display run history and resumption status
+/tmp/cascade dot | dot -Tsvg -o trace.svg                   # render the execution trace
+/tmp/cascade graph -f cascade.yaml | dot -Tsvg -o dag.svg   # render the declared dependency graph
+```
+
+Note: `status` and `graph` are custom commands implemented in [`cmd/cascade/main.go`](../../cmd/cascade/main.go) specifically for YAML pipelines. `graph` prints the declared dependency DAG, whereas the engine's `dot` command visualizes the runtime call trace of a specific run.

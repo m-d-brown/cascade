@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/ui"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/ui"
 	"github.com/spf13/cobra"
 )
 
 // start is the front door: what this workflow did last time, and the
-// question that follows from it — start a new run, or finish one that never
+// question that follows from it: start a new run, or finish one that never
 // got to the end?
 //
 // It is what a bare invocation does on a terminal. Everything it offers is a
@@ -55,7 +55,7 @@ func start(cmd *cobra.Command, app App, opt *options) error {
 			return nil
 		case "p", "plan":
 			planOpt := *opt
-			planOpt.pretend, planOpt.cont = true, ""
+			planOpt.plan, planOpt.cont = true, ""
 			if err := runWorkflow(cmd, &planOpt, app); err != nil {
 				fmt.Fprintln(out, err)
 			}
@@ -115,7 +115,7 @@ func interactive(cmd *cobra.Command) bool {
 }
 
 // printSummary says what this workflow is and where its state lives. There
-// is no shape to summarize beyond that — no wave count, no step list — since
+// is no shape to summarize beyond that (no wave count, no step list), since
 // what a workflow does is discovered by running it, not read off a graph.
 func printSummary(w io.Writer, app App, opt *options) {
 	fmt.Fprintf(w, "\n%s", app.Name)
@@ -145,13 +145,13 @@ func printRecent(w io.Writer, journal *history.Journal) {
 		if n, ok := number[run.ID]; ok {
 			mark = fmt.Sprintf("%d.", n)
 		}
-		pretend := ""
-		if run.Pretend {
-			pretend = " (plan)"
+		planLabel := ""
+		if run.Plan {
+			planLabel = " (plan)"
 		}
 		fmt.Fprintf(w, "  %-3s %s %s %-12s %-24.24s %-34s %s%s\n",
 			mark, run.Started.Format("2006-01-02 15:04"), run.Status.Symbol(),
-			runWord(run), run.Input, counts(run), duration(run), pretend)
+			runWord(run), run.Input, counts(run), duration(run), planLabel)
 	}
 }
 
@@ -162,7 +162,7 @@ func printRecent(w io.Writer, journal *history.Journal) {
 func continuable(journal *history.Journal) []history.Run {
 	var out []history.Run
 	for _, r := range journal.Recent(5) {
-		if r.Pretend {
+		if r.Plan {
 			continue
 		}
 		if !r.Done() || r.Status == history.Failed {
@@ -220,24 +220,24 @@ func printRuns(cmd *cobra.Command, opt *options) error {
 		return nil
 	}
 	for _, run := range recent {
-		pretend := ""
-		if run.Pretend {
-			pretend = " (plan)"
+		planLabel := ""
+		if run.Plan {
+			planLabel = " (plan)"
 		}
 		fmt.Fprintf(out, "%-20s %s %-12s %-24.24s %s%s\n", run.ID, run.Status.Symbol(),
-			runWord(run), run.Input, counts(run), pretend)
+			runWord(run), run.Input, counts(run), planLabel)
 		if run.Logs != "" {
 			fmt.Fprintf(out, "%-20s logs: %s (or: %s logs %s)\n", "", run.Logs, cmd.Root().Name(), run.ID)
 		}
-		if !run.Pretend && !run.Done() {
+		if !run.Plan && !run.Done() {
 			fmt.Fprintf(out, "%-20s finish it: %s run --continue %s\n", "", cmd.Root().Name(), run.ID)
 		}
 	}
 	return nil
 }
 
-// printLogs prints a run's combined log — every line, in the order it
-// happened, the same content the live display was built from — so
+// printLogs prints a run's combined log: every line, in the order it
+// happened, the same content the live display was built from. So
 // `logs <id>` and the [l] choice in start need nothing but a run id.
 func printLogs(cmd *cobra.Command, opt *options, want string) error {
 	store := history.NewFileStore(opt.statePath)
@@ -265,7 +265,7 @@ func printLogs(cmd *cobra.Command, opt *options, want string) error {
 }
 
 // printFlamegraph prints a run's timeline as Chrome Trace Event Format
-// JSON — drag the output into chrome://tracing or ui.perfetto.dev to see
+// JSON. Drag the output into chrome://tracing or ui.perfetto.dev to see
 // which calls overlapped and which ran back to back.
 func printFlamegraph(cmd *cobra.Command, opt *options, want string) error {
 	store := history.NewFileStore(opt.statePath)

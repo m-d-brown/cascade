@@ -30,8 +30,8 @@ type Result struct {
 	Started  time.Time
 	Finished time.Time
 	Duration time.Duration
-	// Order lists every call's path in the order it finished — which, since
-	// a caller always finishes after everything it called, reads as callees
+	// Order lists every call's path in the order it finished. Since a caller
+	// always finishes after everything it called, this reads as callees
 	// before their caller, and the root call last of all.
 	Order  []string
 	Tasks  map[string]*TaskResult
@@ -80,7 +80,7 @@ func (r *Result) ExitCode() int {
 	return 0
 }
 
-// SortedResults returns every call's result in Result.Order — callees before
+// SortedResults returns every call's result in Result.Order: callees before
 // their caller, root last.
 func (r *Result) SortedResults() []*TaskResult {
 	out := make([]*TaskResult, 0, len(r.Tasks))

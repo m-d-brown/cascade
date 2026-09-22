@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 func TestSummarySucceededVerdict(t *testing.T) {

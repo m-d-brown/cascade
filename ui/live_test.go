@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 func TestModelApplyBuildsRowsAsCallsAreDiscovered(t *testing.T) {
@@ -74,7 +74,7 @@ func TestWantKeepUpSkipsBrowseWhenExitWhenDoneIsSet(t *testing.T) {
 	defer func() { _ = r.Close() }()
 	defer func() { _ = w.Close() }()
 
-	// exitWhenDone wins regardless of what's driving input — even an *os.File
+	// exitWhenDone wins regardless of what's driving input, even an *os.File
 	// that IsTerminal would call a terminal, were this one.
 	if wantKeepUp(r, true) {
 		t.Fatal("exitWhenDone=true should never keep the display up")
@@ -92,8 +92,8 @@ func TestWantKeepUpIsFalseForNonTerminalInput(t *testing.T) {
 	defer func() { _ = r.Close() }()
 	defer func() { _ = w.Close() }()
 
-	// A pipe is an *os.File but not a terminal — the situation piped or
-	// tested input is actually in — so there's nobody to drive a browse.
+	// A pipe is an *os.File but not a terminal (the situation piped or
+	// tested input is actually in), so there's nobody to drive a browse.
 	if wantKeepUp(r, false) {
 		t.Fatal("a pipe is not a terminal; keepUp should be false")
 	}

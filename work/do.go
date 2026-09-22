@@ -9,7 +9,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // taskConfig is what [Option]s configure for one call to [Do] or [Go].
@@ -23,7 +23,7 @@ type taskConfig struct {
 	// neverRestore is set only on the run's own root call: continuing a run
 	// means re-entering the workflow function so it can walk through and
 	// retry whatever did not finish, so the root call itself must never be
-	// handed back as a single resumed unit — only the nested calls it goes
+	// handed back as a single resumed unit. Only the nested calls it goes
 	// on to make are ever eligible for that.
 	neverRestore bool
 }
@@ -37,31 +37,31 @@ type Option func(*taskConfig)
 // always runs again.
 func Secret() Option { return func(c *taskConfig) { c.secret = true } }
 
-// Critical marks a call whose failure aborts the whole run — every other
-// call still in flight is canceled — rather than only stopping the branch
-// of the workflow that called it.
+// Critical marks a call whose failure aborts the whole run, canceling every
+// other call still in flight, instead of only stopping the branch of the
+// workflow that called it.
 func Critical() Option { return func(c *taskConfig) { c.critical = true } }
 
 // Timeout bounds how long a call may run. Past it the call's context is
-// canceled and it fails, the same as any other failure — its caller decides
-// what that means, and everything else in the run is left alone.
+// canceled and it fails, the same as any other failure. Its caller decides
+// what that means; everything else in the run is left alone.
 //
-// The work has to notice: the deadline arrives through the [Context], so
-// anything using it as a context — exec.CommandContext(ctx, …), a select on
-// ctx.Done() — stops on its own, and work that ignores it entirely will not.
+// The deadline arrives through the [Context], so code using it as a context
+// (exec.CommandContext(ctx, …), a select on ctx.Done()) stops on its own.
+// Code that ignores the context does not.
 func Timeout(d time.Duration) Option { return func(c *taskConfig) { c.timeout = d } }
 
 // Config records the configuration a call depends on. It is mixed into the
-// call's fingerprint, which is what [Options.Continue] and [LastRecord]
-// compare against a recorded run: change it and there is no result to hand
-// back for this call, so it runs fresh rather than being told a
-// configuration it no longer has produced this.
+// call's fingerprint, which [Options.Continue] and [LastRecord] compare
+// against a recorded run. Changing it means there is no result to return
+// for this call, so it runs fresh instead of reusing a result recorded
+// under a configuration it no longer matches.
 func Config(fingerprint string) Option { return func(c *taskConfig) { c.fingerprint = fingerprint } }
 
-// Tag labels a call for [history.Dot] and the trace it draws from — the
-// calls that share a tag are drawn as one cluster. It has no effect on what
-// runs; it is a name for talking about calls from outside, not a dependency.
-// The last Tag given to a call wins.
+// Tag labels a call for [history.Dot] and the trace it draws from: calls
+// that share a tag are drawn as one cluster. It has no effect on what runs;
+// it is a name for referring to calls from outside, not a dependency. The
+// last Tag given to a call wins.
 func Tag(name string) Option { return func(c *taskConfig) { c.tag = name } }
 
 // Doc describes a call in one line, shown under its name by [history.Dot] and in
@@ -76,7 +76,7 @@ func buildConfig(opts []Option) taskConfig {
 	return c
 }
 
-// taskOutcome is the untyped result of one call — the plumbing [Do] and [Go]
+// taskOutcome is the untyped result of one call: the plumbing [Do] and [Go]
 // share.
 type taskOutcome struct {
 	value   any
@@ -84,21 +84,21 @@ type taskOutcome struct {
 	err     error
 }
 
-// Do calls fn as one named unit of work and waits for it, the same as
-// calling it directly except that the call is tracked: logged under its own
-// path, drawn as a box by [history.Dot], and — if it succeeds — remembered so
-// that [Options.Continue] can hand its result back instead of calling fn
-// again.
+// Do calls fn as one named unit of work and waits for it. Calling it
+// through Do is the same as calling fn directly, except the call is
+// tracked: logged under its own path, drawn as a box by [history.Dot], and,
+// if it succeeds, recorded so that [Options.Continue] can return its result
+// instead of calling fn again.
 //
-// fn is an ordinary function — whatever it returns is what the caller gets,
+// fn is an ordinary function: whatever it returns is what the caller gets,
 // and an error fails the call exactly the way it would fail anything else in
 // Go. One that needs nothing but ctx can be named directly, with nothing
 // wrapping it:
 //
-//	func fetchSource(ctx *flow.Context, version string) (string, error) { … }
+//	func fetchSource(ctx *work.Context, version string) (string, error) { … }
 //
-//	func report(ctx *flow.Context) (string, error) {
-//	    at, err := flow.Do(ctx, "snapshot", snapshot)
+//	func report(ctx *work.Context) (string, error) {
+//	    at, err := work.Do(ctx, "snapshot", snapshot)
 //	    if err != nil {
 //	        return "", err
 //	    }
@@ -106,18 +106,18 @@ type taskOutcome struct {
 //	    return at, nil
 //	}
 //
-//	_, err := flow.Do(ctx, "report", report)
+//	_, err := work.Do(ctx, "report", report)
 //
 // One that needs more than ctx is bound to its extra arguments with a
 // closure at the call site, not at its own declaration:
 //
-//	flow.Do(ctx, "source", func(ctx *flow.Context) (string, error) {
+//	work.Do(ctx, "source", func(ctx *work.Context) (string, error) {
 //	    return fetchSource(ctx, version)
 //	})
 //
 // See [Context.Summarize] for the one-line summary the run shows for the
 // call. Return [Skip] as fn's error to report work the call decided not to
-// do — a disabled feature, a case that does not apply; its reason becomes
+// do (a disabled feature, a case that does not apply). Its reason becomes
 // the summary, and it is reported apart from an ordinary success without
 // failing the run.
 //
@@ -142,14 +142,14 @@ type Future[T any] struct {
 	err   error
 }
 
-// Go starts fn as a named unit of work running concurrently with its caller
-// and returns immediately with a [Future] for its result. It is the whole of
-// how two things run at the same time:
+// Go starts fn as a named unit of work running concurrently with its caller,
+// and returns immediately with a [Future] for its result. This is the
+// entire mechanism for running two things at once:
 //
-//	linux := flow.Go(ctx, "build-linux", func(ctx *flow.Context) (string, error) {
+//	linux := work.Go(ctx, "build-linux", func(ctx *work.Context) (string, error) {
 //	    return build(ctx, "linux", version)
 //	})
-//	darwin := flow.Go(ctx, "build-darwin", func(ctx *flow.Context) (string, error) {
+//	darwin := work.Go(ctx, "build-darwin", func(ctx *work.Context) (string, error) {
 //	    return build(ctx, "darwin", version)
 //	})
 //	a, err := linux.Get()
@@ -184,8 +184,8 @@ func Go[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts
 }
 
 // Get waits for the call to finish and returns what it produced. It also
-// returns if the run is canceled first — through the [Context] the call was
-// started on — which is how a caller waiting on several futures still
+// returns early if the run is canceled, through the [Context] the call was
+// started on, which is how a caller waiting on several futures still
 // notices the run going down.
 func (f *Future[T]) Get() (T, error) {
 	select {
@@ -199,8 +199,8 @@ func (f *Future[T]) Get() (T, error) {
 
 // callTyped adapts a typed [Do]/[Go] function to the untyped core. A skip's
 // reason becomes the call's summary the same way [Context.Summarize] would
-// set it — Skip is how a call reports what it decided instead of doing the
-// work, and that decision is the whole of what is worth showing.
+// set it. Skip is how a call reports what it decided instead of doing the
+// work, and that decision is what's worth showing.
 func callTyped[T any](c *Context, fn func(*Context) (T, error)) taskOutcome {
 	v, err := fn(c)
 	var sk skipped
@@ -214,11 +214,11 @@ func callTyped[T any](c *Context, fn func(*Context) (T, error)) taskOutcome {
 	return taskOutcome{value: v}
 }
 
-// call resolves one call at path: hand back a recorded result if the run
+// call resolves one call at path: return a recorded result if the run
 // being continued already made it, otherwise run fn and record what
 // happened. It is the core [Do] and [Go] both build on.
 //
-// Every branch emits TaskStarted before anything else — a log line or a
+// Every branch emits TaskStarted before anything else. A log line or a
 // TaskFinished for a row that was never announced has nothing to attach to,
 // so an observer building the tree live is guaranteed to see a call's start
 // before its end, whichever path it takes to get there.
@@ -310,10 +310,10 @@ func safeCall(fn func(*Context) taskOutcome, ctx *Context) (out taskOutcome) {
 }
 
 // settle records a call's terminal result in the runner's own bookkeeping
-// and tells the observers — every path a call can end on, live or resumed,
+// and tells the observers. Every path a call can end on, live or resumed,
 // runs through here. resumed is the record it stood in for, when there is
-// one: its Started/Finished/Duration are what the journal remembers, not how
-// long standing in for it took, which is no time at all.
+// one: its Started/Finished/Duration are what the journal remembers, not
+// how long standing in for it took (which is no time at all).
 func (r *Runner) settle(tr *history.TaskResult, resumed *history.Record) {
 	if tr.Finished.IsZero() {
 		tr.Finished = time.Now()
@@ -354,7 +354,7 @@ func (r *Runner) recordLive(tr *history.TaskResult, out taskOutcome, cfg taskCon
 }
 
 // recordTask adds one call's record to the run being checkpointed and
-// writes it to the store — the run's own account of what it did, updated as
+// writes it to the store: the run's own account of what it did, updated as
 // it happens rather than assembled at the end.
 func (r *Runner) recordTask(path string, rec history.Record) {
 	if r.opts.Store == nil {
@@ -396,44 +396,44 @@ type RecordMeta struct {
 	Summary  string
 	Started  time.Time
 	Finished time.Time
-	// HasValue reports whether the record carries a value at all — false for
-	// a call made with [Secret], or one JSON could not carry.
+	// HasValue reports whether the record carries a value at all. It is
+	// false for a call made with [Secret], or one JSON could not carry.
 	HasValue bool
 }
 
 // Age is how long ago the call last ran.
 func (m RecordMeta) Age() time.Duration { return time.Since(m.Finished) }
 
-// LastRecord returns what a previous run of this workflow — this one being
-// continued, an earlier one, or the one before that — recorded the last time
+// LastRecord returns what a previous run of this workflow (this one being
+// continued, an earlier one, or the one before that) recorded the last time
 // name was called from the same place ctx is now, if the call succeeded and
 // its fingerprint still matches.
 //
-// It takes the same options [Do] would, so the check reads as "ask about
-// the call I would otherwise make": pass the [Config] the call depends on
-// and a record made under a different one is not offered. Options that do
-// not bear on the record — [Timeout], [Critical] and the rest — are
-// accepted and ignored.
+// It takes the same options [Do] would, so the check reads as asking about
+// the call that would otherwise be made: pass the [Config] the call depends
+// on, and a record made under a different one is not offered. Options that
+// do not bear on the record, such as [Timeout] and [Critical], are accepted
+// and ignored.
 //
 // It is how a call decides whether it needs to run at all, written as an
 // ordinary if statement rather than a check the framework asks on its
 // behalf:
 //
-//	if v, meta, ok := flow.LastRecord[string](ctx, "snapshot", flow.Config(cfg)); ok && meta.Age() < every {
+//	if v, meta, ok := work.LastRecord[string](ctx, "snapshot", work.Config(cfg)); ok && meta.Age() < every {
 //	    return v, nil
 //	}
-//	return flow.Do(ctx, "snapshot", takeSnapshot, flow.Config(cfg))
+//	return work.Do(ctx, "snapshot", takeSnapshot, work.Config(cfg))
 //
-// Because that decision runs before anything is called, nothing behind the
-// decision — the archive this snapshot would have needed, the files that
-// archive would have collected — is ever called either. That is the whole of
-// "do this at most once a day": the code simply does not reach the rest of
+// Because that decision runs before anything else is called, nothing behind
+// it (the archive this snapshot would have needed, the files that archive
+// would have collected) is ever called either. That is what "do this at
+// most once a day" means here: the code simply does not reach the rest of
 // the workflow.
 //
-// A value that does not fit T at all — this call rewired to do something
-// different from what it once did — panics naming both types, the same way
-// a program with the wrong type would fail to compile if Go could check
-// across this boundary.
+// A value that does not fit T at all, for example if this call was rewired
+// to do something different from what it once did, panics naming both
+// types: the run-time equivalent of a compile error Go can't catch across
+// this boundary.
 func LastRecord[T any](ctx *Context, name string, opts ...Option) (value T, meta RecordMeta, ok bool) {
 	if ctx == nil || ctx.runner == nil || ctx.runner.journal == nil {
 		return value, meta, false
@@ -458,8 +458,8 @@ func LastRecord[T any](ctx *Context, name string, opts ...Option) (value T, meta
 
 // defaultSummary is what a call shows when it never calls [Context.Summarize]:
 // its own return value, if that reads as a line on its own, or "done"
-// otherwise — a call producing a barrier `bool`, a count, or a struct has
-// nothing better to say for itself than that it finished.
+// otherwise. A call producing a barrier `bool`, a count, or a struct has
+// nothing more specific to report than that it finished.
 func defaultSummary(v any) string {
 	if s, ok := v.(string); ok && s != "" {
 		return s

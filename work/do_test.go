@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
+	"github.com/m-d-brown/cascade/history"
 )
 
 // errOnly adapts a plain error-returning workflow to the (string, error)

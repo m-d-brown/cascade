@@ -42,8 +42,8 @@ func TestResultSortedResultsListsCalleesBeforeTheirCaller(t *testing.T) {
 }
 
 func TestDecodeAsRoundTripsThroughJSONWhenTheLiveTypeDoesNotAssert(t *testing.T) {
-	// A value shaped like what the journal hands back — a plain map, the
-	// way an int comes back a float64 — must still decode into T.
+	// A value shaped like what the journal returns (a plain map, the way an
+	// int comes back a float64) must still decode into T.
 	raw := map[string]any{"a": float64(1)}
 	type shape struct {
 		A int `json:"a"`

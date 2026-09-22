@@ -1,0 +1,13 @@
+#!/bin/sh
+# Installed by `task hooks:install` (git config core.hooksPath .githooks).
+# Runs the same gate a human or an agent should run by hand before
+# committing: see `task precommit` and CLAUDE.md / AGENTS.md.
+
+set -e
+
+if ! command -v task >/dev/null 2>&1; then
+	echo "pre-commit: 'task' is not on PATH (https://taskfile.dev) — skipping the precommit gate" >&2
+	exit 0
+fi
+
+task precommit

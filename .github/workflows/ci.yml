@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "not gofmt'd:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: install markdownfmt
+        run: go install github.com/Kunde21/markdownfmt/v3/cmd/markdownfmt@latest
+
+      - name: markdownfmt
+        run: |
+          unformatted=$(markdownfmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "not markdownfmt'd:"; echo "$unformatted"; exit 1
+          fi
+
+      - run: go build ./...
+      - run: go vet ./...
+
+      - name: install golangci-lint
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+      - run: golangci-lint run ./...
+
+      - run: go test ./... -race
+
+      # api.txt is generated from the source. A diff here means an exported
+      # name changed without `go generate ./internal/api` being run and
+      # committed alongside it.
+      - name: api.txt is up to date
+        run: |
+          go generate ./internal/api
+          git diff --exit-code -- api.txt

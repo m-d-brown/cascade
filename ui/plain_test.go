@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/world"
 )
 
 func TestPlainWritesOneLinePerEvent(t *testing.T) {

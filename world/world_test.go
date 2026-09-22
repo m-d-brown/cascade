@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // runFor runs fn as the whole of a workflow and returns the result, for

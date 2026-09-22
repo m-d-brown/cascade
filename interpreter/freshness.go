@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // fresh reports whether an action can be skipped: every freshness signal it
@@ -75,7 +75,7 @@ func producesFresh(ctx *work.Context, w world.World, a Action) (bool, error) {
 					return false, nil // an input is newer ⇒ stale
 				}
 			}
-			// The outputs are all present and current — but if a sources
+			// The outputs are all present and current, but if a sources
 			// pattern matched nothing, the check is blind to those inputs.
 			for _, pat := range unmatched {
 				ctx.Warnf("looks up to date, but the sources pattern %q matched no files, so a change to those inputs will not be noticed", pat)
@@ -86,8 +86,8 @@ func producesFresh(ctx *work.Context, w world.World, a Action) (bool, error) {
 }
 
 // unlessFresh runs the unless command; exit 0 means the action is already
-// done. Anything else — a clean non-zero exit or a command that could not run
-// at all — is taken as stale, so a broken check never blocks the real work.
+// done. Anything else (a clean non-zero exit or a command that could not run
+// at all) is taken as stale, so a broken check never blocks the real work.
 func unlessFresh(ctx *work.Context, w world.World, a Action) (bool, error) {
 	return world.Perform(ctx, w, world.Effect[bool]{
 		What:    "check: " + a.Unless,
@@ -150,7 +150,7 @@ func newestSource(dir string, patterns []string) (newest time.Time, unmatched []
 			}
 			continue
 		}
-		// "**" — walk from the static prefix, match the tail against each
+		// "**": walk from the static prefix, match the tail against each
 		// file's name.
 		i := strings.Index(full, "**")
 		base := full[:i]
@@ -198,8 +198,8 @@ func joinDir(dir, p string) string {
 	return filepath.Join(dir, p)
 }
 
-// expandHome expands a leading "~" or "~/" to the user's home directory —
-// which "sh -c" does for Run but os.Stat and filepath.Glob do not.
+// expandHome expands a leading "~" or "~/" to the user's home directory, the
+// way "sh -c" does for Run but os.Stat and filepath.Glob do not.
 func expandHome(p string) string {
 	if p != "~" && !strings.HasPrefix(p, "~/") {
 		return p

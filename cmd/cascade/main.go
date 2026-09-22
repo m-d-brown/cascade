@@ -3,9 +3,9 @@
 //
 // The cascade file names the actions, what each waits for (needs:), and how
 // each decides it is already up to date (produces/sources, unless:, every:).
-// This binary reads the file and drives the framework underneath — so the
+// This binary reads the file and drives the framework underneath, so the
 // live tree, the journal, flow.log, dot, flamegraph, --continue and approval
-// prompts all come for free. See package github.com/mdbrown/cascade/interpreter
+// prompts all come for free. See package github.com/m-d-brown/cascade/interpreter
 // for the file format and the design.
 //
 //	cascade run -f build.yaml         # run the graph
@@ -17,7 +17,7 @@
 //	cascade graph -f build.yaml       # print the dependency DAG as Graphviz
 //	cascade dot | dot -Tsvg -o r.svg  # draw the run that just happened
 //
-// Install it with `go install github.com/mdbrown/cascade/cmd/cascade@latest`,
+// Install it with `go install github.com/m-d-brown/cascade/cmd/cascade@latest`,
 // or run it in place with `go run ./cmd/cascade …`. examples/cascade has a
 // self-contained cascade to try it on.
 package main
@@ -32,11 +32,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mdbrown/cascade/cli"
-	"github.com/mdbrown/cascade/history"
-	"github.com/mdbrown/cascade/interpreter"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/cli"
+	"github.com/m-d-brown/cascade/history"
+	"github.com/m-d-brown/cascade/interpreter"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 	"github.com/spf13/pflag"
 )
 
@@ -79,9 +79,9 @@ and how each decides it is already up to date.
   cascade dot | dot -Tsvg     draw the run that just happened
 
 --dry-run routes every action through a world that changes nothing. plan
-(and -n / --pretend) marks the journal so the run is never resumed from;
-because every action here is an external command, this runner also gives a
-plan the dry-run world, so "plan" is always safe to type.`,
+(run --plan) marks the journal so the run is never resumed from; because
+every action here is an external command, this runner also gives a plan
+the dry-run world, so "plan" is always safe to type.`,
 		Flags: func(fs *pflag.FlagSet) {
 			fs.StringVarP(&file, "file", "f", file, "path to the cascade file")
 			fs.BoolVar(&dryRun, "dry-run", false, "route every action through a world that changes nothing")
@@ -93,12 +93,12 @@ plan the dry-run world, so "plan" is always safe to type.`,
 			if err != nil {
 				return "", work.Fatal(err)
 			}
-			// plan / -n / --pretend only mark the journal; the world stays
+			// plan / -n / --plan only mark the journal; the world stays
 			// whatever we build here. Since every action is an external
 			// command, a plan that ran them for real would be a trap, so a
-			// pretend run gets the dry-run world too — the pattern an app
+			// plan run gets the dry-run world too: the pattern an app
 			// opts into when it wants "plan" to mean "touch nothing".
-			rehearse := dryRun || pretendRun()
+			rehearse := dryRun || planRun()
 			w := world.Real()
 			if rehearse {
 				w = world.DryRun()
@@ -121,13 +121,13 @@ plan the dry-run world, so "plan" is always safe to type.`,
 	})
 }
 
-// pretendRun reports whether this invocation is `plan` or carries the
-// framework's own --pretend / -n. cli.App gives Flow no view of the parsed
+// planRun reports whether this invocation is `plan` or carries the
+// framework's own --plan / -n. cli.App gives Flow no view of the parsed
 // command, so this reads the raw arguments, the same way any app that wants
 // plan to imply a dry run does.
-func pretendRun() bool {
+func planRun() bool {
 	for _, a := range os.Args[1:] {
-		if a == "plan" || a == "-n" || a == "--pretend" || a == "--pretend=true" {
+		if a == "plan" || a == "-n" || a == "--plan" || a == "--plan=true" {
 			return true
 		}
 	}
@@ -248,7 +248,7 @@ func statusCmd(args []string) int {
 		return 1
 	}
 
-	// In --watch, stop when the run finishes — or, if the run process was
+	// In --watch, stop when the run finishes. Also stop if the run process was
 	// killed outright (no "finished" event ever written), when nothing has
 	// changed for a while and every started action is done.
 	var last string

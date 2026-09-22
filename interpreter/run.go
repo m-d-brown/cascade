@@ -11,17 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mdbrown/cascade/units"
-	"github.com/mdbrown/cascade/work"
-	"github.com/mdbrown/cascade/world"
+	"github.com/m-d-brown/cascade/units"
+	"github.com/m-d-brown/cascade/work"
+	"github.com/m-d-brown/cascade/world"
 )
 
 // Run executes the cascade as a workflow: one work.Go call per
 // action, wave by wave in dependency order, each command shelled out through
 // w. A nil w is [world.Real].
 //
-// Each action reports the one-line summary its command last printed — a
-// string, so the run journal can hand it back on --continue and the `every`
+// Each action reports the one-line summary its command last printed, a
+// string, so the run journal can return it on --continue and the `every`
 // check can read its age. An action that was already up to date, was blocked
 // by a failed dependency, or is a bare barrier reports nothing and shows as
 // skipped.
@@ -36,8 +36,8 @@ import (
 //	    return r.Run(ctx, world.Real())
 //	}
 //
-// The world is the caller's to build — Real, DryRun, or either wrapped in
-// world.Confirm — the same way any workflow owns its own world.
+// The world is the caller's to build (Real, DryRun, or either wrapped in
+// world.Confirm), the same way any workflow owns its own world.
 func (r *Plan) Run(ctx *work.Context, w world.World) (string, error) {
 	if w == nil {
 		w = world.Real()
@@ -164,9 +164,9 @@ func runAction(ctx *work.Context, w world.World, a Action, everyFresh bool) (str
 	}
 
 	// While the command runs, keep the action's live status current: its own
-	// latest line of output, or — if the action gave a progress: command —
-	// that command's output, polled on an interval. Either way it reaches the
-	// live tree and `cascade status` as a task-status event.
+	// latest line of output, or, if the action gave a progress: command, that
+	// command's output, polled on an interval. Either way it reaches the live
+	// tree and `cascade status` as a task-status event.
 	watch := units.NewWatcher()
 	stop := ctx.Monitor(progressInterval(a), progressProbe(a, watch))
 	defer stop()
@@ -194,7 +194,7 @@ func runAction(ctx *work.Context, w world.World, a Action, everyFresh bool) (str
 }
 
 // warnMissingOutputs flags a produces path the command did not actually
-// create — almost always a typo in the path, and the reason the action would
+// create: almost always a typo in the path, and the reason the action would
 // otherwise re-run on every invocation.
 func warnMissingOutputs(ctx *work.Context, a Action) {
 	for _, out := range a.Produces {
@@ -291,7 +291,7 @@ func lastLine(res units.ExecResult) string {
 
 // fingerprint is what a recorded result has to match for --continue and the
 // `every` check to still trust it: everything about the action that changes
-// what its command does. Freshness settings are deliberately left out —
+// what its command does. Freshness settings are deliberately left out;
 // tightening `every` should not by itself force a re-run.
 func fingerprint(a Action) string {
 	parts := []string{a.Run, a.Dir}

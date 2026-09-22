@@ -13,7 +13,7 @@ import (
 )
 
 // Action is one node of a cascade: a shell command, what it waits for, and how
-// it decides it is already up to date. Every field is optional — the action's
+// it decides it is already up to date. Every field is optional. The action's
 // name is the key it is filed under in the cascade file, not a field here.
 type Action struct {
 	// Run is the command line, run through "sh -c" so pipelines and $VARs
@@ -21,7 +21,7 @@ type Action struct {
 	// and otherwise does nothing.
 	Run string `yaml:"run"`
 	// Needs names the actions that must finish first. A need that fails
-	// leaves this action blocked — recorded as skipped, not run. In the file
+	// leaves this action blocked, recorded as skipped, not run. In the file
 	// a bare string is accepted as a one-element list.
 	Needs []string `yaml:"needs"`
 	// Produces and Sources are a make-style freshness check: the action is up
@@ -33,9 +33,9 @@ type Action struct {
 	Produces []string `yaml:"produces"`
 	Sources  []string `yaml:"sources"`
 	// Every skips the action when the journal shows it last succeeded less
-	// than this ago — a Go duration string such as "24h" or "90m".
+	// than this ago: a Go duration string such as "24h" or "90m".
 	Every string `yaml:"every"`
-	// Timeout bounds how long Run (and its checks) may take — a Go duration
+	// Timeout bounds how long Run (and its checks) may take: a Go duration
 	// string. Past it the command is killed and the action fails, like any
 	// other failure. Empty means no limit.
 	Timeout string `yaml:"timeout"`
@@ -47,7 +47,7 @@ type Action struct {
 	// command that does not report progress of its own. With no Progress set,
 	// Run's own latest line of output is used.
 	Progress string `yaml:"progress"`
-	// ProgressEvery is how often the live status refreshes — a Go duration
+	// ProgressEvery is how often the live status refreshes: a Go duration
 	// string. Default: every 15s with a Progress command, every 2s without.
 	ProgressEvery string `yaml:"progress-every"`
 	// Env sets environment variables for Run and Unless, on top of (not
@@ -75,7 +75,7 @@ type Plan struct {
 }
 
 // Warnings are the problems in the cascade file that do not stop it running
-// but are very likely mistakes — a barrier action that also sets freshness
+// but are very likely mistakes: a barrier action that also sets freshness
 // fields, an `allow-exit` code no process can return, two actions that
 // declare the same output. [Plan.Run] logs them before it starts, and
 // `cascade check` prints them. An empty slice means nothing looked wrong.
@@ -210,8 +210,8 @@ func build(f file) (*Plan, error) {
 	return r, nil
 }
 
-// schedule returns one valid topological order and the topological waves —
-// each wave being the actions whose dependencies are all in earlier waves,
+// schedule returns one valid topological order and the topological waves:
+// each wave is the actions whose dependencies are all in earlier waves,
 // sorted for a stable result. A cycle is an error naming the loop.
 func schedule(actions map[string]Action, names []string) (order []string, waves [][]string, err error) {
 	indeg := make(map[string]int, len(names))
@@ -303,7 +303,7 @@ func findCycle(actions map[string]Action, names []string) []string {
 // Name is the cascade's name: its own name field, or the file's base name.
 func (r *Plan) Name() string { return r.name }
 
-// Order is one valid order to run the actions in — every action after the
+// Order is one valid order to run the actions in: every action after the
 // ones it needs. It is stable across calls.
 func (r *Plan) Order() []string { return append([]string(nil), r.order...) }
 

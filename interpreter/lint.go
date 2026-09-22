@@ -143,7 +143,7 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// walkBase is the directory a "**" pattern's tree walk would start from — the
+// walkBase is the directory a "**" pattern's tree walk would start from: the
 // static prefix up to the last "/" before the "**". ok is false when the
 // pattern has no "**".
 func walkBase(pat string) (base string, ok bool) {

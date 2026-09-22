@@ -30,7 +30,7 @@ var statusColor = map[Status]string{
 // Dot renders a run's trace in Graphviz DOT format: one box per call it
 // made, nested under the call that made it.
 //
-// There is no graph to draw before a run happens — what a workflow calls is
+// There is no graph to draw before a run happens: what a workflow calls is
 // exactly what its own code decides to call, which is not known until it
 // runs. Dot draws what a run *did*: pass a run that finished for a complete
 // picture, or one still in progress, or a run executed against a dry-run

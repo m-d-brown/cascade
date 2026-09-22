@@ -1,4 +1,4 @@
-module github.com/mdbrown/cascade
+module github.com/m-d-brown/cascade
 
 go 1.25.0
 

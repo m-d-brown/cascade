@@ -50,8 +50,8 @@ func TestStartPlanThenQuit(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("code = %d; output:\n%s", code, out)
 	}
-	if !strings.Contains(errOut, "marking this run as pretend") {
-		t.Fatalf("[p] did not run a pretend plan; stderr:\n%s", errOut)
+	if !strings.Contains(errOut, "marking this run as a plan") {
+		t.Fatalf("[p] did not run a plan; stderr:\n%s", errOut)
 	}
 }
 

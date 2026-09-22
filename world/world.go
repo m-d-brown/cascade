@@ -3,12 +3,12 @@ package world
 import (
 	"fmt"
 
-	"github.com/mdbrown/cascade/work"
+	"github.com/m-d-brown/cascade/work"
 )
 
 // Effect is one thing a call does to the world: what it is, how it happens,
 // and what a dry run hands back in its place. Its type parameter is what the
-// effect produces, so [Perform] hands that same type straight back — no
+// effect produces, so [Perform] hands that same type straight back: no
 // assertion, no conversion:
 //
 //	stats, err := world.Perform(ctx, w, world.Effect[resticStats]{
@@ -34,7 +34,7 @@ type Effect[T any] struct {
 // World is where a call's effects land.
 //
 // A call describes what it is about to do as an [Effect] and hands it,
-// along with the world it should land in, to [Perform] or [Change] — the
+// along with the world it should land in, to [Perform] or [Change], and the
 // world decides what that means. There are two:
 //
 //	world.Real()     // effects happen
@@ -43,7 +43,7 @@ type Effect[T any] struct {
 // That is the whole of "what if I don't want this to really run": one
 // choice, made by whoever builds the World a run uses, rather than a flag
 // every call has to remember to honour. A call never asks which world it is
-// in — if a call branches on the answer, the effect was described in the
+// in: if a call branches on the answer, the effect was described in the
 // wrong place.
 //
 // An application can supply its own by wrapping one of these: a world that
@@ -114,7 +114,7 @@ func Perform[T any](call *work.Context, w World, e Effect[T]) (T, error) {
 	}
 	val, ok := v.(T)
 	if !ok && v != nil {
-		// A World handed back a value of a type the effect never declared —
+		// A World handed back a value of a type the effect never declared:
 		// a custom World's bug. Fail closed rather than quietly returning
 		// the zero value.
 		return zero, fmt.Errorf("%s: world returned %T, want %T", what, v, zero)
@@ -125,8 +125,8 @@ func Perform[T any](call *work.Context, w World, e Effect[T]) (T, error) {
 	return val, nil
 }
 
-// Change performs an effect that produces nothing but its own happening —
-// the common case, and the one worth keeping short.
+// Change performs an effect that produces nothing but its own happening: the
+// common case, and the one worth keeping short.
 //
 //	err := world.Change(ctx, w, "create "+dir, func() error { return os.MkdirAll(dir, 0o755) })
 func Change(call *work.Context, w World, what string, do func() error) error {
