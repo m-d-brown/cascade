@@ -26,6 +26,18 @@ func TestViewRendersRowsAndPressToAbortHint(t *testing.T) {
 	}
 }
 
+func TestViewTitlesTheRunWithItsName(t *testing.T) {
+	for _, tc := range []struct{ name, want string }{{"release", "release · 1 calls"}, {"", "cascade · 1 calls"}} {
+		m := newModel(func() {})
+		m.width, m.height = 80, 24
+		m.apply(history.Event{Kind: history.RunStarted, Name: tc.name, Time: time.Now()})
+		m.apply(history.Event{Kind: history.TaskStarted, Path: "a", Status: history.Running, Time: time.Now()})
+		if out := m.View(); !strings.Contains(out, tc.want) {
+			t.Errorf("name %q: header missing %q:\n%s", tc.name, tc.want, out)
+		}
+	}
+}
+
 func TestViewIsEmptyBeforeAnyRows(t *testing.T) {
 	m := newModel(func() {})
 	if m.View() != "" {

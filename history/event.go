@@ -65,6 +65,9 @@ type Event struct {
 	Time time.Time
 	// Run is the id of the run this event belongs to.
 	Run string
+	// Name is the workflow's name ([work.Options.Name]), set on RunStarted
+	// so a display can title the run.
+	Name string
 	// Path is the full path of the call this event is about. Empty for
 	// RunStarted, RunLog and RunFinished.
 	Path string

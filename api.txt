@@ -88,6 +88,7 @@ package history
 	type Event field Level slog.Level
 	type Event field LogPath string
 	type Event field Message string
+	type Event field Name string
 	type Event field Outcome *Result
 	type Event field Parent string
 	type Event field Path string

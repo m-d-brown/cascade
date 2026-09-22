@@ -147,7 +147,7 @@ func (r *Runner) Run(ctx context.Context) (*history.Result, error) {
 	// Checkpoint before anything happens, so a run interrupted in its first
 	// second is still a run somebody can ask about.
 	r.checkpoint(ctx)
-	r.emit(history.Event{Kind: history.RunStarted, Time: started, LogPath: r.opts.Logs.Combined()})
+	r.emit(history.Event{Kind: history.RunStarted, Time: started, Name: r.opts.Name, LogPath: r.opts.Logs.Combined()})
 
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()

@@ -194,6 +194,9 @@ type model struct {
 	logView *logPane
 	// logFile is the run's one text log (flow.log), learned from RunStarted.
 	logFile string
+	// name titles the display, learned from RunStarted; "cascade" if the
+	// run has none.
+	name string
 }
 
 // logPane reads one call's lines out of the run's single text log.
@@ -366,6 +369,7 @@ func (m *model) apply(e history.Event) tea.Cmd {
 	case history.RunStarted:
 		m.started = e.Time
 		m.logFile = e.LogPath
+		m.name = e.Name
 		m.rows = m.rows[:0]
 		m.index = map[string]int{}
 	case history.TaskStarted:
@@ -631,7 +635,11 @@ func (m *model) header(suffix string) string {
 	if !m.started.IsZero() {
 		elapsed = time.Since(m.started)
 	}
-	head := fmt.Sprintf("cascade · %d calls · %s", len(m.rows), round(elapsed))
+	name := m.name
+	if name == "" {
+		name = "cascade"
+	}
+	head := fmt.Sprintf("%s · %d calls · %s", name, len(m.rows), round(elapsed))
 	switch {
 	case m.aborting:
 		head += " · aborting…"

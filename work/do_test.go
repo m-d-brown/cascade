@@ -30,6 +30,18 @@ func runFor(t *testing.T, root func(ctx *Context) error, opts Options) *history.
 	return res
 }
 
+func TestRunStartedCarriesTheWorkflowName(t *testing.T) {
+	var name string
+	runFor(t, func(ctx *Context) error { return nil }, Options{Name: "release", Observer: funcObserver(func(e history.Event) {
+		if e.Kind == history.RunStarted {
+			name = e.Name
+		}
+	})})
+	if name != "release" {
+		t.Fatalf("RunStarted Name = %q, want %q", name, "release")
+	}
+}
+
 func TestRunWritesOneTextLogTaggedByCall(t *testing.T) {
 	ld, err := history.NewLogDir(t.TempDir())
 	if err != nil {
