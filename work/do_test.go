@@ -443,3 +443,20 @@ func TestRunWaitsForCallsItsRootLeftRunning(t *testing.T) {
 		t.Errorf("root/slow finished at event %d, the run at %d:\n%s", finished, runFinished, strings.Join(kinds, "\n"))
 	}
 }
+
+func TestGetPrefersAFinishedResultToCancellation(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		var got string
+		var gotErr error
+		runFor(t, func(ctx *Context) error {
+			f := Go(ctx, "quick", func(ctx *Context) (string, error) { return "done", nil })
+			<-f.done
+			ctx.runner.cancel()
+			got, gotErr = f.Get()
+			return nil
+		}, Options{})
+		if got != "done" || gotErr != nil {
+			t.Fatalf("attempt %d: Get = %q, %v; want the finished call's result", i, got, gotErr)
+		}
+	}
+}

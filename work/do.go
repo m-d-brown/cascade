@@ -190,6 +190,13 @@ func Go[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts
 // started on, which is how a caller waiting on several futures still
 // notices the run going down.
 func (f *Future[T]) Get() (T, error) {
+	// A call that has finished returns what it produced, even when the run
+	// is being canceled at the same moment.
+	select {
+	case <-f.done:
+		return f.value, f.err
+	default:
+	}
 	select {
 	case <-f.done:
 		return f.value, f.err

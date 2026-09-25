@@ -118,7 +118,7 @@ if err != nil {
 
 ### Concurrency Rules
 
-- Calling `(*Future[T]).Get()` blocks until the task completes, fails, or the workflow context is canceled.
+- Calling `(*Future[T]).Get()` blocks until the task completes, fails, or the workflow context is canceled. A task that has already finished returns its result even if the run is being canceled at that moment.
 - A run does not finish until every task started with `work.Go` has, whether or not its future was read. A workflow that returns the first error among several futures still has the others' results recorded, in the summary, the journal and the event log.
 - Concurrency across all `work.Go` calls is bounded by the `--jobs` flag (default is CPU-based; `0` means unbounded).
 - Synchronous `work.Do` calls execute inline on the caller's goroutine and do not count toward the `--jobs` concurrency limit.
