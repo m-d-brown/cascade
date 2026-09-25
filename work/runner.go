@@ -74,6 +74,10 @@ type Runner struct {
 	sem        chan struct{}
 
 	emitMu sync.Mutex
+	// calls counts the calls started with [Go] that have not finished. A
+	// run ends only once they all have, whether or not anything read their
+	// futures.
+	calls sync.WaitGroup
 
 	mu       sync.Mutex
 	tasks    map[string]*history.TaskResult
@@ -158,6 +162,11 @@ func (r *Runner) Run(ctx context.Context) (*history.Result, error) {
 	_, rootErr := r.call(root, rootPath, r.opts.Name, taskConfig{neverRestore: true}, func(c *Context) taskOutcome {
 		return callTyped(c, r.root)
 	})
+	// The root can return with calls it started still running: one that
+	// returns the first error among several futures leaves the rest going.
+	// They are part of the run, so it waits for them rather than finishing
+	// without their results.
+	r.calls.Wait()
 
 	if ctx.Err() != nil {
 		r.abort("run canceled: " + ctx.Err().Error())

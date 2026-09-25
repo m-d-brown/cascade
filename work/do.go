@@ -164,7 +164,9 @@ func Go[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts
 	path := ctx.runner.childPath(ctx.Path(), name)
 	r := ctx.runner
 	f := &Future[T]{done: make(chan struct{}), ctx: ctx}
+	r.calls.Add(1)
 	go func() {
+		defer r.calls.Done()
 		defer close(f.done)
 		release, ok := r.acquire(ctx.context())
 		if !ok {

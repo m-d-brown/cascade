@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -399,5 +400,46 @@ func TestDuplicateNamesUnderOneParentAreDisambiguated(t *testing.T) {
 		if res.Tasks[want] == nil {
 			t.Fatalf("missing task %q; have %v", want, res.Order)
 		}
+	}
+}
+
+func TestRunWaitsForCallsItsRootLeftRunning(t *testing.T) {
+	var kinds []string
+	var mu sync.Mutex
+	res := runFor(t, func(ctx *Context) error {
+		slow := Go(ctx, "slow", func(ctx *Context) (string, error) {
+			time.Sleep(50 * time.Millisecond)
+			return "finished", nil
+		})
+		failing := Go(ctx, "failing", func(ctx *Context) (string, error) { return "", errors.New("boom") })
+		// The pattern the guide shows: return the first error, leaving
+		// the other call running.
+		if _, err := failing.Get(); err != nil {
+			return err
+		}
+		_, err := slow.Get()
+		return err
+	}, Options{Name: "root", Observer: funcObserver(func(e history.Event) {
+		mu.Lock()
+		defer mu.Unlock()
+		kinds = append(kinds, e.Kind.String()+" "+e.Path)
+	})})
+
+	if tr := res.Tasks["root/slow"]; tr == nil || tr.Status != history.Succeeded || tr.Summary != "finished" {
+		t.Fatalf("root/slow in the result = %+v", tr)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	finished, runFinished := -1, -1
+	for i, k := range kinds {
+		switch k {
+		case "task-finished root/slow":
+			finished = i
+		case "run-finished ":
+			runFinished = i
+		}
+	}
+	if finished < 0 || runFinished < finished {
+		t.Errorf("root/slow finished at event %d, the run at %d:\n%s", finished, runFinished, strings.Join(kinds, "\n"))
 	}
 }
