@@ -33,7 +33,7 @@ It runs, in order: `gofmt` check, `prettier` check, `go vet`, a build, `golangci
 
 If a step fails, fix it and run `task precommit` again before committing. Do not commit past a red gate.
 
-Don't have `task` (https://taskfile.dev)? Install it with `go install github.com/go-task/task/v3/cmd/task@latest`. See `Taskfile.yml` for the individual tasks (`fmt`, `vet`, `build`, `lint`, `test`, `tidy`, `api`) if you only need one of them.
+Don't have `task` (https://taskfile.dev)? Install it with `go install github.com/go-task/task/v3/cmd/task@latest`. See `Taskfile.yml` for the individual tasks (`fmt`, `vet`, `build`, `install`, `lint`, `test`, `tidy`, `api`) if you only need one of them.
 
 To make this automatic on `git commit`, run once: `task hooks:install`. It points `core.hooksPath` at `.githooks`, which runs `task precommit`. No other task runs this for you, since it edits repo-local git config: that is a decision for whoever owns the checkout to make, not a side effect of testing.
 
