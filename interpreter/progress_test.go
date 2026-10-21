@@ -49,6 +49,12 @@ actions:
 	if rp.Actions[0].Detail != "hello" {
 		t.Errorf("first detail = %q, want hello", rp.Actions[0].Detail)
 	}
+	if len(rp.Actions[0].Needs) != 0 {
+		t.Errorf("first needs = %q, want none", rp.Actions[0].Needs)
+	}
+	if got := rp.Actions[1].Needs; len(got) != 1 || got[0] != "first" {
+		t.Errorf("second needs = %q, want [first]", got)
+	}
 }
 
 func TestReadProgressMissingLog(t *testing.T) {

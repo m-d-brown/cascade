@@ -15,7 +15,9 @@ import (
 // ActionStatus is one action's progress within a run, folded from the run's
 // event log.
 type ActionStatus struct {
-	Name   string
+	Name string
+	// Needs is the actions this one waited on, as recorded when it started.
+	Needs  []string
 	Status history.Status
 	// Detail is the action's latest status line while it runs, or its summary
 	// once it finishes.
@@ -49,13 +51,14 @@ type RunProgress struct {
 
 // logLine is one line of the run's event log (history.LogEvents' format).
 type logLine struct {
-	Time    string `json:"time"`
-	Run     string `json:"run"`
-	Event   string `json:"event"`
-	Task    string `json:"task"`
-	Status  string `json:"status"`
-	Level   string `json:"level"`
-	Message string `json:"message"`
+	Time    string   `json:"time"`
+	Run     string   `json:"run"`
+	Event   string   `json:"event"`
+	Task    string   `json:"task"`
+	Status  string   `json:"status"`
+	Level   string   `json:"level"`
+	Message string   `json:"message"`
+	After   []string `json:"after"`
 }
 
 // ReadProgress folds the event log under logDir (its run.jsonl) into the
@@ -110,6 +113,12 @@ func ReadProgress(logDir string) (*RunProgress, error) {
 		switch l.Event {
 		case "task-started":
 			a.Started, a.Updated = when, when
+			a.Needs = nil
+			for _, dep := range l.After {
+				if n, ok := childName(root, dep); ok {
+					a.Needs = append(a.Needs, n)
+				}
+			}
 			setStatus(a, l.Status)
 		case "task-status":
 			if l.Message != "" {

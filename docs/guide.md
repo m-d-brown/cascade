@@ -61,14 +61,15 @@ func Do[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts
 
 ### Task Options
 
-| Option             | Effect                                                                                                                                     |
-| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| `work.Tag(name)`   | Assigns a group tag used for clustering in Graphviz DOT diagrams. Does not affect execution.                                               |
-| `work.Critical()`  | If this task fails, aborts the entire workflow run immediately rather than only failing the caller.                                        |
-| `work.Config(str)` | Mixes `str` into the task's execution fingerprint. If `str` changes, cached results in `--continue` and `work.LastRecord` are invalidated. |
-| `work.Timeout(d)`  | Cancels `ctx` and fails the task if execution exceeds duration `d`.                                                                        |
-| `work.Secret()`    | Excludes the return value from being written to the state journal.                                                                         |
-| `work.Doc(str)`    | Single-line description shown in `dot` graphs and `state` listings.                                                                        |
+| Option                 | Effect                                                                                                                                                         |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `work.Tag(name)`       | Assigns a group tag used for clustering in Graphviz DOT diagrams. Does not affect execution.                                                                   |
+| `work.Critical()`      | If this task fails, aborts the entire workflow run immediately rather than only failing the caller.                                                            |
+| `work.Config(str)`     | Mixes `str` into the task's execution fingerprint. If `str` changes, cached results in `--continue` and `work.LastRecord` are invalidated.                     |
+| `work.Timeout(d)`      | Cancels `ctx` and fails the task if execution exceeds duration `d`.                                                                                            |
+| `work.Secret()`        | Excludes the return value from being written to the state journal.                                                                                             |
+| `work.Doc(str)`        | Single-line description shown in `dot` graphs and `state` listings.                                                                                            |
+| `work.After(names...)` | Names the sibling calls this task waited on. The live tree draws siblings with these edges as a lane graph, like `git log --graph`. Does not affect execution. |
 
 ---
 

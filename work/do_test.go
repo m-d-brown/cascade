@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -157,6 +158,25 @@ func TestDoNestsUnderItsCaller(t *testing.T) {
 	}
 	if inner.Parent != "root/outer" {
 		t.Fatalf("Parent = %q, want %q", inner.Parent, "root/outer")
+	}
+}
+
+func TestAfterNamesSiblingPathsOnTaskStarted(t *testing.T) {
+	var after []string
+	runFor(t, func(ctx *Context) error {
+		if _, err := Do(ctx, "compile", func(ctx *Context) (bool, error) { return true, nil }); err != nil {
+			return err
+		}
+		_, err := Do(ctx, "test", func(ctx *Context) (bool, error) { return true, nil }, After("compile", "lint"))
+		return err
+	}, Options{Name: "root", Observer: funcObserver(func(e history.Event) {
+		if e.Kind == history.TaskStarted && e.Path == "root/test" {
+			after = e.After
+		}
+	})})
+
+	if want := []string{"root/compile", "root/lint"}; !slices.Equal(after, want) {
+		t.Fatalf("After = %q, want %q", after, want)
 	}
 }
 

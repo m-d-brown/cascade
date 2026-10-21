@@ -2,6 +2,7 @@
 # A change here is a change to what users can call. Review it as one.
 
 package work
+	func After(names ...string) Option
 	func Config(fingerprint string) Option
 	func Critical() Option
 	func Do[T any](ctx *Context, name string, fn func(ctx *Context) (T, error), opts ...Option) (T, error)
@@ -83,6 +84,7 @@ package history
 	type Duration method (*Duration) UnmarshalText(b []byte) error
 	type Duration method (Duration) MarshalText() ([]byte, error)
 	type Duration time.Duration
+	type Event field After []string
 	type Event field Doc string
 	type Event field Kind EventKind
 	type Event field Level slog.Level
@@ -265,10 +267,16 @@ package units
 	type Watcher struct
 
 package ui
+	func Graph(deps [][]int) []GraphLine
 	func IsTerminal(f *os.File) bool
 	func NewLive(out io.Writer, in io.Reader, cancel func(), exitWhenDone bool) *Live
 	func NewPlain(out io.Writer, in io.Reader, verbose bool) *Plain
 	func Summary(w io.Writer, res *history.Result)
+	type GraphLine field Below string
+	type GraphLine field Left string
+	type GraphLine field Node int
+	type GraphLine field Right string
+	type GraphLine struct
 	type Live method (*Live) Handle(e history.Event)
 	type Live method (*Live) PromptApproval(ctx context.Context, req world.Request) (world.Decision, error)
 	type Live method (*Live) Start()
@@ -301,6 +309,7 @@ package interpreter
 	type ActionStatus field Detail string
 	type ActionStatus field Finished bool
 	type ActionStatus field Name string
+	type ActionStatus field Needs []string
 	type ActionStatus field Started time.Time
 	type ActionStatus field Status history.Status
 	type ActionStatus field Updated time.Time

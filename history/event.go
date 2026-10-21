@@ -75,6 +75,10 @@ type Event struct {
 	// TaskStarted, which is what lets an observer build the call tree as it
 	// happens rather than being handed it up front.
 	Parent string
+	// After is the paths of the sibling calls this call waited on before it
+	// started, from its After option. Set on TaskStarted, so a display can
+	// draw the call beneath what it depends on.
+	After []string
 	// Doc and Tag are set on TaskStarted, from a call's Doc and Tag options.
 	Doc     string
 	Tag     string
@@ -135,6 +139,7 @@ func LogEvents(w io.Writer) Observer {
 			Run:     e.Run,
 			Event:   e.Kind.String(),
 			Task:    e.Path,
+			After:   e.After,
 			Message: e.Message,
 		}
 		if e.Level >= slog.LevelWarn && (e.Kind == TaskLog || e.Kind == RunLog) {
@@ -179,6 +184,7 @@ type eventLine struct {
 	Run      string         `json:"run,omitempty"`
 	Event    string         `json:"event"`
 	Task     string         `json:"task,omitempty"`
+	After    []string       `json:"after,omitempty"`
 	Status   string         `json:"status,omitempty"`
 	Level    string         `json:"level,omitempty"`
 	Message  string         `json:"message,omitempty"`

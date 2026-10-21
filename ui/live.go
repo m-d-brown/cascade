@@ -159,6 +159,7 @@ type row struct {
 	path    string
 	name    string
 	parent  string
+	after   []string
 	status  history.Status
 	message string
 	started time.Time
@@ -375,7 +376,7 @@ func (m *model) apply(e history.Event) tea.Cmd {
 	case history.TaskStarted:
 		m.index[e.Path] = len(m.rows)
 		m.rows = append(m.rows, row{
-			path: e.Path, name: lastSegment(e.Path), parent: e.Parent,
+			path: e.Path, name: lastSegment(e.Path), parent: e.Parent, after: e.After,
 			status: e.Status, started: e.Time, message: startMessage(e.Status),
 		})
 	case history.TaskLog, history.TaskStatus:
@@ -848,6 +849,9 @@ func (m *model) renderItem(it renderedItem, nameWidth, width int) string {
 	if it.isSummary {
 		return truncateVisible(dimStyle.Render(it.summary), width)
 	}
+	if it.node == nil { // a line that only joins lanes
+		return truncateVisible(dimStyle.Render(it.prefix), width)
+	}
 	r := *it.node.row
 	glyph := r.status.Symbol()
 	if r.status == history.Running {
@@ -855,38 +859,37 @@ func (m *model) renderItem(it renderedItem, nameWidth, width int) string {
 	}
 	style := statusStyle[r.status]
 
-	var line string
-	if it.prefix == "" {
-		line = fmt.Sprintf("%s %s %s %s",
-			style.Render(glyph),
-			nameStyle.Render(pad(r.name, nameWidth)),
-			dimStyle.Render(pad(elapsedText(r), 7)),
-			dimStyle.Render(r.message),
-		)
-	} else {
-		padSpaces := nameWidth - lipgloss.Width(it.prefix) - lipgloss.Width(r.name)
-		if padSpaces < 0 {
-			padSpaces = 0
-		}
-		line = fmt.Sprintf("%s%s %s%s %s %s",
-			dimStyle.Render(it.prefix),
-			style.Render(glyph),
-			nameStyle.Render(r.name),
-			strings.Repeat(" ", padSpaces),
-			dimStyle.Render(pad(elapsedText(r), 7)),
-			dimStyle.Render(r.message),
-		)
-	}
+	padSpaces := max(nameWidth-itemNameWidth(it), 0)
+	line := fmt.Sprintf("%s%s%s %s%s %s %s",
+		dimOrEmpty(it.prefix),
+		style.Render(glyph),
+		dimOrEmpty(it.right),
+		nameStyle.Render(r.name),
+		strings.Repeat(" ", padSpaces),
+		dimStyle.Render(pad(elapsedText(r), 7)),
+		dimStyle.Render(r.message),
+	)
 	return truncateVisible(line, width)
+}
+
+// itemNameWidth is how wide a drawn row is up to the end of its name, less
+// the glyph and the space after it.
+func itemNameWidth(it renderedItem) int {
+	return lipgloss.Width(it.prefix) + lipgloss.Width(it.right) + lipgloss.Width(it.node.row.name)
+}
+
+func dimOrEmpty(s string) string {
+	if s == "" {
+		return ""
+	}
+	return dimStyle.Render(s)
 }
 
 func nameWidthOf(items []renderedItem) int {
 	nameWidth := 4
 	for _, it := range items {
 		if !it.isSummary && it.node != nil {
-			if w := lipgloss.Width(it.prefix) + lipgloss.Width(it.node.row.name); w > nameWidth {
-				nameWidth = w
-			}
+			nameWidth = max(nameWidth, itemNameWidth(it))
 		}
 	}
 	return nameWidth

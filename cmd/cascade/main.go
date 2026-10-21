@@ -31,10 +31,12 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/m-d-brown/cascade/cli"
 	"github.com/m-d-brown/cascade/history"
 	"github.com/m-d-brown/cascade/interpreter"
+	"github.com/m-d-brown/cascade/ui"
 	"github.com/m-d-brown/cascade/work"
 	"github.com/m-d-brown/cascade/world"
 	"github.com/spf13/pflag"
@@ -354,19 +356,40 @@ func printProgress(w *os.File, rp *interpreter.RunProgress) {
 		fmt.Fprintln(w, "  (no actions have started yet)")
 		return
 	}
-	width := 0
-	for _, a := range rp.Actions {
-		if len(a.Name) > width {
-			width = len(a.Name)
+	// Draw the actions as the live tree does: a lane graph of their needs, in
+	// the order they started.
+	index := make(map[string]int, len(rp.Actions))
+	for i, a := range rp.Actions {
+		index[a.Name] = i
+	}
+	deps := make([][]int, len(rp.Actions))
+	for i, a := range rp.Actions {
+		for _, n := range a.Needs {
+			if j, ok := index[n]; ok {
+				deps[i] = append(deps[i], j)
+			}
 		}
 	}
-	for _, a := range rp.Actions {
+	lines := ui.Graph(deps)
+	width := 0
+	for _, l := range lines {
+		if l.Node >= 0 {
+			width = max(width, utf8.RuneCountInString(l.Left+l.Right+rp.Actions[l.Node].Name))
+		}
+	}
+	for _, l := range lines {
+		if l.Node < 0 {
+			fmt.Fprintf(w, "  %s\n", l.Left)
+			continue
+		}
+		a := rp.Actions[l.Node]
 		detail := a.Detail
 		if !a.Finished && a.Status == history.Running && detail == "" {
 			detail = "…"
 		}
-		fmt.Fprintf(w, "  %s %-*s  %-8s %6s  %s\n",
-			a.Status.Symbol(), width, a.Name, a.Status, round(a.Elapsed()), detail)
+		pad := strings.Repeat(" ", width-utf8.RuneCountInString(l.Left+l.Right+a.Name))
+		fmt.Fprintf(w, "  %s%s%s %s%s  %-8s %6s  %s\n",
+			l.Left, a.Status.Symbol(), l.Right, a.Name, pad, a.Status, round(a.Elapsed()), detail)
 	}
 }
 

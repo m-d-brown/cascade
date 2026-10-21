@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/m-d-brown/cascade/history"
@@ -59,6 +60,61 @@ func TestBuildForestNestsByParentPath(t *testing.T) {
 	}
 	if len(build.children) != 1 || build.children[0].row.path != "release/build/generate" {
 		t.Fatalf("build's children: %+v", build.children)
+	}
+}
+
+// drawn renders items as plain text, with "*" for each status glyph.
+func drawn(items []renderedItem) string {
+	var b strings.Builder
+	for _, it := range items {
+		if it.node == nil {
+			b.WriteString(it.prefix + "\n")
+			continue
+		}
+		b.WriteString(it.prefix + "*" + it.right + " " + it.node.row.name + "\n")
+	}
+	return b.String()
+}
+
+func TestDrawForestDrawsDependentSiblingsAsLanes(t *testing.T) {
+	rows := []row{
+		{path: "build", name: "build"},
+		{path: "build/deps", name: "deps", parent: "build"},
+		{path: "build/compile", name: "compile", parent: "build", after: []string{"build/deps"}},
+		{path: "build/lint", name: "lint", parent: "build", after: []string{"build/deps"}},
+		{path: "build/test", name: "test", parent: "build", after: []string{"build/compile"}},
+		{path: "build/package", name: "package", parent: "build", after: []string{"build/test", "build/lint"}},
+		{path: "build/release", name: "release", parent: "build", after: []string{"build/package"}},
+	}
+	want := `* build
+  * deps
+  ├─╮
+  * │ compile
+  │ * lint
+  * │ test
+  ├─╯
+  * package
+  * release
+`
+	if got := drawn(flattenAll(buildForest(rows))); got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestDrawForestKeepsTreeConnectorsWithoutAfter(t *testing.T) {
+	rows := []row{
+		{path: "r", name: "r"},
+		{path: "r/a", name: "a", parent: "r"},
+		{path: "r/a/x", name: "x", parent: "r/a"},
+		{path: "r/b", name: "b", parent: "r"},
+	}
+	want := `* r
+  ├─ * a
+  │  └─ * x
+  └─ * b
+`
+	if got := drawn(flattenAll(buildForest(rows))); got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
 }
 

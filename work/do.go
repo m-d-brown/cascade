@@ -20,6 +20,7 @@ type taskConfig struct {
 	fingerprint string
 	tag         string
 	doc         string
+	after       []string
 	// neverRestore is set only on the run's own root call: continuing a run
 	// means re-entering the workflow function so it can walk through and
 	// retry whatever did not finish, so the root call itself must never be
@@ -68,12 +69,45 @@ func Tag(name string) Option { return func(c *taskConfig) { c.tag = name } }
 // `state`. It has no effect on what runs.
 func Doc(doc string) Option { return func(c *taskConfig) { c.doc = doc } }
 
+// After names the sibling calls this call waited on before it started: calls
+// made from the same parent, by the names given to [Do] or [Go]. It has no
+// effect on what runs; the caller does the waiting itself, typically with
+// [Future.Get]. The names reach observers on the call's TaskStarted event,
+// where the live tree uses them to draw the call beneath what it waited on
+// instead of directly beneath its parent.
+//
+//	compile := work.Go(ctx, "compile", compileFn)
+//	if _, err := compile.Get(); err != nil {
+//	    return err
+//	}
+//	work.Do(ctx, "test", testFn, work.After("compile"))
+func After(names ...string) Option {
+	return func(c *taskConfig) { c.after = append(c.after, names...) }
+}
+
 func buildConfig(opts []Option) taskConfig {
 	var c taskConfig
 	for _, o := range opts {
 		o(&c)
 	}
 	return c
+}
+
+// siblingPaths turns the names given to [After] into the paths those calls
+// have under parent.
+func siblingPaths(parent string, names []string) []string {
+	if len(names) == 0 {
+		return nil
+	}
+	out := make([]string, len(names))
+	for i, n := range names {
+		if parent == "" {
+			out[i] = n
+		} else {
+			out[i] = parent + "/" + n
+		}
+	}
+	return out
 }
 
 // taskOutcome is the untyped result of one call: the plumbing [Do] and [Go]
@@ -233,9 +267,10 @@ func callTyped[T any](c *Context, fn func(*Context) (T, error)) taskOutcome {
 // before its end, whichever path it takes to get there.
 func (r *Runner) call(parent *Context, path, name string, cfg taskConfig, fn func(*Context) taskOutcome) (any, error) {
 	parentPath := parentOf(path)
+	after := siblingPaths(parentPath, cfg.after)
 
 	if parent.context().Err() != nil {
-		r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, Status: history.Canceled, Time: time.Now()})
+		r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, After: after, Status: history.Canceled, Time: time.Now()})
 		tr := &history.TaskResult{Path: path, Name: name, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, Status: history.Canceled, Summary: "run aborted"}
 		r.settle(tr, nil)
 		return nil, parent.context().Err()
@@ -243,7 +278,7 @@ func (r *Runner) call(parent *Context, path, name string, cfg taskConfig, fn fun
 
 	fp := r.fingerprint(cfg)
 	if rec, ok := r.restorable(path, fp); ok && !cfg.neverRestore {
-		r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, Status: history.Resumed, Time: rec.Started})
+		r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, After: after, Status: history.Resumed, Time: rec.Started})
 		child := r.newContext(parent, path, name, cfg)
 		child.Logf("restored from run %s: %s", r.continuing.ID, rec.Summary)
 		tr := &history.TaskResult{
@@ -265,7 +300,7 @@ func (r *Runner) call(parent *Context, path, name string, cfg taskConfig, fn fun
 		defer cancel()
 		child.ctx = timed
 	}
-	r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, Status: history.Running, Time: child.started})
+	r.emit(history.Event{Kind: history.TaskStarted, Path: path, Parent: parentPath, Doc: cfg.doc, Tag: cfg.tag, After: after, Status: history.Running, Time: child.started})
 
 	out := safeCall(fn, child)
 	if cfg.timeout > 0 && errors.Is(child.Err(), context.DeadlineExceeded) && parent.context().Err() == nil {

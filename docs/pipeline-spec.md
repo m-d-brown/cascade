@@ -57,7 +57,7 @@ Every action is configured under its unique key in `actions`. All fields within 
 
 ### Dependencies
 
-- **`needs`** (`[]string` or `string`): List of prerequisite actions that must complete successfully before this action starts. In YAML, a single string can be provided instead of a list. If any required dependency fails or is skipped due to an upstream failure, this action is blocked and marked as `Skipped`.
+- **`needs`** (`[]string` or `string`): List of prerequisite actions that must complete successfully before this action starts. In YAML, a single string can be provided instead of a list. If any required dependency fails or is skipped due to an upstream failure, this action is blocked and marked as `Skipped`. The live terminal tree and `cascade status` draw the actions as a lane graph, in the order they started, with a line from each dependency down to the actions that need it. A chain of dependencies stays in one column; lanes split where several actions need the same one and join where one action needs several.
 
 ### Documentation & UI
 

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/m-d-brown/cascade/history"
 )
@@ -74,9 +73,14 @@ func buildForest(rows []row) []*treeNode {
 	return roots
 }
 
+// renderedItem is one drawn line. A line with neither a node nor a summary
+// only joins the lanes of a lane graph, and prefix is all of it.
 type renderedItem struct {
-	node      *treeNode
+	node *treeNode
+	// prefix is what comes before the node's status glyph, and right is the
+	// lanes of a lane graph that continue to the right of it.
 	prefix    string
+	right     string
 	isSummary bool
 	summary   string
 }
@@ -189,34 +193,53 @@ func markSubtree(n *treeNode, plan map[*treeNode]how, v how) {
 
 // drawForest renders the planned nodes, giving each the connectors that
 // match the rows actually drawn beside it.
+//
+// Siblings are drawn with tree connectors, unless some of them declared
+// with work.After that they waited on others. Those siblings are drawn as a
+// lane graph instead (see [Graph]), so a chain of dependencies stays in one
+// column rather than stepping further right with every link.
 func drawForest(roots []*treeNode, plan map[*treeNode]how) []renderedItem {
 	var out []renderedItem
-	var walk func(nodes []*treeNode, isLast []bool)
-	walk = func(nodes []*treeNode, isLast []bool) {
+	var group func(nodes []*treeNode, indent string, top bool)
+	// draw emits n, then everything beneath it, which below prefixes.
+	draw := func(n *treeNode, prefix, right, below string) {
+		if plan[n] == collapse {
+			out = append(out, renderedItem{node: n, prefix: prefix, right: right,
+				isSummary: true, summary: summaryOf(n)})
+			return
+		}
+		out = append(out, renderedItem{node: n, prefix: prefix, right: right})
+		group(n.children, below, false)
+	}
+	group = func(nodes []*treeNode, indent string, top bool) {
 		visible := make([]*treeNode, 0, len(nodes))
 		for _, n := range nodes {
 			if plan[n] != omit {
 				visible = append(visible, n)
 			}
 		}
-		for i, n := range visible {
-			// Copy rather than append in place: siblings would share the
-			// backing array, and each needs its own answer for this level.
-			here := make([]bool, len(isLast), len(isLast)+1)
-			copy(here, isLast)
-			here = append(here, i == len(visible)-1)
-
-			prefix := formatPrefix(here)
-			if plan[n] == collapse {
-				out = append(out, renderedItem{node: n, prefix: prefix,
-					isSummary: true, summary: summaryOf(n)})
-				continue
+		if deps := siblingDeps(visible); deps != nil {
+			for _, l := range Graph(deps) {
+				if l.Node < 0 {
+					out = append(out, renderedItem{prefix: indent + l.Left})
+					continue
+				}
+				draw(visible[l.Node], indent+l.Left, l.Right, indent+l.Below+"  ")
 			}
-			out = append(out, renderedItem{node: n, prefix: prefix})
-			walk(n.children, here)
+			return
+		}
+		for i, n := range visible {
+			switch {
+			case top: // a root hangs from nothing
+				draw(n, "", "", "  ")
+			case i == len(visible)-1:
+				draw(n, indent+"└─ ", "", indent+"   ")
+			default:
+				draw(n, indent+"├─ ", "", indent+"│  ")
+			}
 		}
 	}
-	walk(roots, nil)
+	group(roots, "", true)
 
 	if hidden := countHidden(roots, plan); hidden > 0 {
 		out = append(out, renderedItem{isSummary: true,
@@ -264,26 +287,27 @@ func capRows(items []renderedItem, maxRows int) []renderedItem {
 		summary: fmt.Sprintf("… (%d more)", left)})
 }
 
-// formatPrefix draws the connectors down to one row, given whether each
-// level above it (and the row itself) was the last of its siblings still
-// drawn.
-func formatPrefix(isLast []bool) string {
-	if len(isLast) <= 1 {
-		return "" // a root hangs from nothing
+// siblingDeps is, for each of the siblings, the indices of the others it
+// declared it waited on, or nil if none of them waited on another. A
+// dependency that is not among them (one folded away, or never started) has
+// no line to draw from, so it is left out.
+func siblingDeps(siblings []*treeNode) [][]int {
+	index := make(map[string]int, len(siblings))
+	for i, n := range siblings {
+		index[n.row.path] = i
 	}
-	var b strings.Builder
-	b.WriteString("  ")
-	for _, last := range isLast[1 : len(isLast)-1] {
-		if last {
-			b.WriteString("   ")
-		} else {
-			b.WriteString("│  ")
+	deps := make([][]int, len(siblings))
+	any := false
+	for i, n := range siblings {
+		for _, a := range n.row.after {
+			if j, ok := index[a]; ok {
+				deps[i] = append(deps[i], j)
+				any = true
+			}
 		}
 	}
-	if isLast[len(isLast)-1] {
-		b.WriteString("└─ ")
-	} else {
-		b.WriteString("├─ ")
+	if !any {
+		return nil
 	}
-	return b.String()
+	return deps
 }

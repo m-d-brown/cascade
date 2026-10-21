@@ -61,7 +61,7 @@ func (r *Plan) Run(ctx *work.Context, w world.World) (string, error) {
 	unusable := make(map[string]bool)
 
 	opts := func(a Action, fp string) []work.Option {
-		o := []work.Option{work.Doc(a.Description), work.Config(fp), work.Tag("action")}
+		o := []work.Option{work.Doc(a.Description), work.Config(fp), work.Tag("action"), work.After(a.Needs...)}
 		if d, err := time.ParseDuration(a.Timeout); err == nil && d > 0 {
 			o = append(o, work.Timeout(d))
 		}
