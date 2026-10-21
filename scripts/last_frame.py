@@ -20,6 +20,7 @@ import sys
 
 CURSOR_UP = re.compile(rb"\x1b\[(\d+)A")
 CURSOR_MARKER = "▸".encode()
+BANNER = re.compile("run \\S+ · logs: [^\n]*\n\r?".encode())
 
 
 def main() -> None:
@@ -36,11 +37,10 @@ def main() -> None:
 
     # A run short enough to finish before the display ever redraws (nothing
     # to skip past above) leaves cli's own "run <id> · logs: …" banner line,
-    # printed before the display starts, at the front — plain text with no
-    # escape codes, unlike everything the display itself ever prints.
-    esc = frame.find(b"\x1b")
-    if esc > 0:
-        frame = frame[esc:]
+    # printed before the display starts, near the front. It can land on
+    # either side of the display's own terminal setup codes (hide cursor,
+    # bracketed paste), which race it to the pty, so match the line itself.
+    frame = BANNER.sub(b"", frame, count=1)
 
     with open(outfile, "wb") as f:
         f.write(frame)

@@ -54,6 +54,12 @@ freeze_flags=(
 	--shadow.x 0
 	--shadow.y 10
 	--font.size 15
+	# freeze embeds JetBrains Mono in the SVG, but rsvg-convert (which freeze
+	# uses for the PNG when it is installed) ignores the embedded font and
+	# looks the family up on the system. Without the generic fallback, a
+	# machine that lacks JetBrains Mono renders a proportional font, and the
+	# tree's box-drawing connectors no longer line up.
+	--font.family "JetBrains Mono, monospace"
 )
 
 ## --- cascade run, twice, as the live tree -----------------------------
